@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout кода
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Настройка Node.js для Vue
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -22,26 +20,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # 3. Сборка Vue Frontend
       - name: Build Frontend
         working-directory: ./frontend
         run: |
           npm ci
           npm run build
 
-      # 4. Настройка PHP для Yii2
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          tools: composer
-
-      # 5. Установка зависимостей Composer
-      - name: Install Composer dependencies
-        working-directory: ./backend
-        run: composer install --no-dev --optimize-autoloader --no-interaction
-
-      # 6. Деплой Frontend
       - name: Deploy Frontend
         uses: appleboy/scp-action@master
         with:
@@ -53,18 +37,16 @@ jobs:
           strip_components: 2
           rm: true
 
-      # 7. Деплой Backend
       - name: Deploy Backend
-        uses: appleboy/scp-action@master
+        uses: burnett01/rsync-deployments@6.0.0
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backend/*"
-          target: "/var/www/backend"
-          strip_components: 1
+          switches: -avzr --delete --exclude 'vendor/' --exclude 'runtime/' --exclude '*-local.php' --exclude 'backend/web/index.php' --exclude 'backend/web/index-test.php' --exclude 'frontend/web/index.php' --exclude 'frontend/web/index-test.php' --exclude 'yii' --exclude 'yii_test' --exclude 'yii_test.bat'
+          path: backend/
+          remote_path: /var/www/backend/
+          remote_host: ${{ secrets.VPS_HOST }}
+          remote_user: ${{ secrets.VPS_USER }}
+          remote_key: ${{ secrets.VPS_SSH_KEY }}
 
-      # 8. Деплой Telegram Bot
       - name: Deploy Telegram Bot
         uses: appleboy/scp-action@master
         with:
@@ -74,21 +56,21 @@ jobs:
           source: "telegram-bot/*"
           target: "/var/www/telegram-bot"
           strip_components: 1
+          overwrite: true
 
-      # 9. Установка прав
-      - name: Set permissions
+      - name: Post-deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            sudo chown -R www-data:www-data /var/www/frontend
-            sudo chown -R www-data:www-data /var/www/backend
-            sudo chown -R www-data:www-data /var/www/telegram-bot
-            sudo chmod -R 755 /var/www
-            sudo chmod -R 777 /var/www/backend/backend/runtime
-            sudo chmod -R 777 /var/www/backend/backend/web/assets
-            sudo chmod -R 777 /var/www/backend/frontend/runtime
-            sudo chmod -R 777 /var/www/backend/frontend/web/assets
-            echo "✅ Deployment successful!"
+            cd /var/www/backend
+            composer install --no-dev --optimize-autoloader --no-interaction
+            mkdir -p backend/runtime/cache backend/web/assets frontend/runtime/cache frontend/web/assets console/runtime
+            chmod +x yii
+            sudo chown -R deploy:www-data /var/www
+            sudo chmod -R 777 backend/runtime backend/web/assets frontend/runtime frontend/web/assets console/runtime
+            php yii cache/flush-all
+            sudo systemctl restart php8.3-fpm
+            echo "✅ Done!"
