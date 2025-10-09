@@ -1,0 +1,23 @@
+# Frontend (Vue)
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+
+# Backend (Yii2)
+backend/vendor/
+backend/backend/runtime/
+backend/backend/web/assets/
+backend/frontend/runtime/
+backend/frontend/web/assets/
+backend/console/runtime/
+backend/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
