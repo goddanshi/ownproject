@@ -13,9 +13,6 @@ return [
     'bootstrap' => ['log'],
     'modules' => [],
     'components' => [
-        'request' => [
-            'csrfParam' => '_csrf-backend',
-        ],
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
@@ -41,10 +38,17 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'POST api/register' => 'api/register',
                 'POST api/login' => 'api/login',
                 'GET api/check' => 'api/check',
                 'POST api/logout' => 'api/logout',
             ],
+        ],
+        'request' => [
+            'cookieValidationKey' => 'your-secret-key-here',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]
         ],
     ],
     'params' => $params,

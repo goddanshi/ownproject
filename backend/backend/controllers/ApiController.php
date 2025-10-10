@@ -12,11 +12,8 @@ class ApiController extends Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        // Убираем authenticator чтобы не требовать токен
         unset($behaviors['authenticator']);
 
-        // CORS для доступа с фронтенда
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::class,
             'cors' => [
@@ -31,15 +28,54 @@ class ApiController extends Controller
         return $behaviors;
     }
 
+    // POST /api/register
+    public function actionRegister()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $data = Yii::$app->request->post();
+
+        $user = new User();
+        $user->username = $data['username'] ?? '';
+        $user->email = $data['email'] ?? '';
+        $user->setPassword($data['password'] ?? '');
+        $user->generateAuthKey();
+        $user->status = User::STATUS_ACTIVE;
+        $user->created_at = time();
+        $user->updated_at = time();
+
+        if ($user->save()) {
+            return [
+                'success' => true,
+                'message' => 'Registration successful',
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                ]
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Registration failed',
+            'errors' => $user->errors
+        ];
+    }
+
     // POST /api/login
     public function actionLogin()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $model = new LoginForm();
         $data = Yii::$app->request->post();
 
-        if ($model->load($data, '') && $model->login()) {
+        $model = new LoginForm();
+        $model->username = $data['username'] ?? '';
+        $model->password = $data['password'] ?? '';
+        $model->rememberMe = true;
+
+        if ($model->login()) {
             $user = Yii::$app->user->identity;
             return [
                 'success' => true,
@@ -54,7 +90,7 @@ class ApiController extends Controller
 
         return [
             'success' => false,
-            'message' => 'Invalid credentials',
+            'message' => 'Invalid username or password',
             'errors' => $model->errors
         ];
     }
@@ -73,6 +109,7 @@ class ApiController extends Controller
             'user' => [
                 'id' => Yii::$app->user->id,
                 'username' => Yii::$app->user->identity->username,
+                'email' => Yii::$app->user->identity->email,
             ]
         ];
     }

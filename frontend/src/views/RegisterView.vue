@@ -1,15 +1,26 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h1>Login</h1>
+  <div class="register-container">
+    <div class="register-card">
+      <h1>Register</h1>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRegister">
         <div class="form-group">
           <label>Username</label>
           <input
             v-model="username"
             type="text"
-            placeholder="testuser"
+            placeholder="Enter username"
+            required
+            minlength="3"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input
+            v-model="email"
+            type="email"
+            placeholder="Enter email"
             required
           />
         </div>
@@ -19,13 +30,24 @@
           <input
             v-model="password"
             type="password"
-            placeholder="testpass"
+            placeholder="Enter password"
+            required
+            minlength="6"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input
+            v-model="confirmPassword"
+            type="password"
+            placeholder="Confirm password"
             required
           />
         </div>
 
         <button type="submit" :disabled="loading">
-          {{ loading ? 'Loading...' : 'Login' }}
+          {{ loading ? 'Creating account...' : 'Register' }}
         </button>
       </form>
 
@@ -33,45 +55,57 @@
         {{ message }}
       </div>
 
-      <div v-if="user" class="user-info">
-        <h3>Logged in as:</h3>
-        <p>ID: {{ user.id }}</p>
-        <p>Username: {{ user.username }}</p>
-        <button @click="handleLogout">Logout</button>
+      <div class="login-link">
+        Already have an account?
+        <RouterLink to="/login">Login here</RouterLink>
       </div>
-    </div>
-    <div class="register-link">
-      Don't have an account?
-      <RouterLink to="/register">Register here</RouterLink>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../services/api'
 
-const username = ref('testuser')
-const password = ref('testpass')
+const router = useRouter()
+
+const username = ref('')
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
-const user = ref(null)
 
-const handleLogin = async () => {
+const handleRegister = async () => {
+  if (password.value !== confirmPassword.value) {
+    message.value = 'Passwords do not match!'
+    messageType.value = 'error'
+    return
+  }
+
   loading.value = true
   message.value = ''
 
   try {
-    const result = await api.login(username.value, password.value)
+    const result = await api.register(username.value, email.value, password.value)
 
     if (result.success) {
-      message.value = result.message
+      message.value = 'Registration successful! Redirecting to login...'
       messageType.value = 'success'
-      user.value = result.user
+
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     } else {
       message.value = result.message
       messageType.value = 'error'
+
+      if (result.errors) {
+        const errorMessages = Object.values(result.errors).flat().join(', ')
+        message.value += ': ' + errorMessages
+      }
     }
   } catch (error) {
     message.value = 'Connection error: ' + error.message
@@ -80,22 +114,10 @@ const handleLogin = async () => {
     loading.value = false
   }
 }
-
-const handleLogout = async () => {
-  try {
-    await api.logout()
-    user.value = null
-    message.value = 'Logged out successfully'
-    messageType.value = 'success'
-  } catch (error) {
-    message.value = 'Logout error: ' + error.message
-    messageType.value = 'error'
-  }
-}
 </script>
 
 <style scoped>
-.login-container {
+.register-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -103,13 +125,13 @@ const handleLogout = async () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.login-card {
+.register-card {
   background: white;
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
 }
 
 h1 {
@@ -136,6 +158,7 @@ input {
   border-radius: 5px;
   font-size: 1rem;
   transition: border-color 0.3s;
+  box-sizing: border-box;
 }
 
 input:focus {
@@ -182,35 +205,19 @@ button:disabled {
   color: #721c24;
 }
 
-.user-info {
-  margin-top: 2rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 5px;
-}
-
-.user-info h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.user-info p {
-  margin: 0.5rem 0;
-  color: #666;
-}
-.register-link {
+.login-link {
   text-align: center;
   margin-top: 1.5rem;
   color: #666;
 }
 
-.register-link a {
+.login-link a {
   color: #667eea;
   text-decoration: none;
   font-weight: 600;
 }
 
-.register-link a:hover {
+.login-link a:hover {
   text-decoration: underline;
 }
 </style>
