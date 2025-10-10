@@ -37,14 +37,15 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'POST api/login' => 'api/login',
+                'GET api/check' => 'api/check',
+                'POST api/logout' => 'api/logout',
             ],
         ],
-        */
     ],
     'params' => $params,
 ];
