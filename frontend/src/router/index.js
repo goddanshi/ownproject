@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,12 +15,20 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
+      meta: { guest: true } // Доступно только гостям
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView
+      component: RegisterView,
+      meta: { guest: true }
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
+      meta: { requiresAuth: true } // Требует авторизацию
     },
     {
       path: '/about',
@@ -28,6 +36,28 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue')
     }
   ]
+})
+
+// Guard для проверки авторизации
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
+  // Проверяем авторизацию при первой загрузке
+  if (authStore.user === null && !authStore.loading) {
+    await authStore.checkAuth()
+  }
+
+  // Если роут требует авторизацию
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/login')
+  }
+  // Если роут только для гостей (login/register), а пользователь уже залогинен
+  else if (to.meta.guest && authStore.isAuthenticated) {
+    next('/dashboard')
+  }
+  else {
+    next()
+  }
 })
 
 export default router

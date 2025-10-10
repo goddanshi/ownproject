@@ -49,26 +49,33 @@
 
 <script setup>
 import { ref } from 'vue'
-import api from '../services/api'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
-const username = ref('testuser')
-const password = ref('testpass')
+const router = useRouter()
+const authStore = useAuthStore()
+
+const username = ref('')
+const password = ref('')
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
-const user = ref(null)
 
 const handleLogin = async () => {
   loading.value = true
   message.value = ''
 
   try {
-    const result = await api.login(username.value, password.value)
+    const result = await authStore.login(username.value, password.value)
 
     if (result.success) {
       message.value = result.message
       messageType.value = 'success'
-      user.value = result.user
+
+      // Редирект на dashboard
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 500)
     } else {
       message.value = result.message
       messageType.value = 'error'
@@ -78,18 +85,6 @@ const handleLogin = async () => {
     messageType.value = 'error'
   } finally {
     loading.value = false
-  }
-}
-
-const handleLogout = async () => {
-  try {
-    await api.logout()
-    user.value = null
-    message.value = 'Logged out successfully'
-    messageType.value = 'success'
-  } catch (error) {
-    message.value = 'Logout error: ' + error.message
-    messageType.value = 'error'
   }
 }
 </script>

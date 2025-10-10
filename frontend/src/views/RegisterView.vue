@@ -66,9 +66,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const username = ref('')
 const email = ref('')
@@ -89,7 +90,7 @@ const handleRegister = async () => {
   message.value = ''
 
   try {
-    const result = await api.register(username.value, email.value, password.value)
+    const result = await authStore.register(username.value, email.value, password.value)
 
     if (result.success) {
       message.value = 'Registration successful! Redirecting to login...'
