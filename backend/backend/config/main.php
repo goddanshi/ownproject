@@ -42,6 +42,7 @@ return [
                 'POST api/login' => 'api/login',
                 'GET api/check' => 'api/check',
                 'POST api/logout' => 'api/logout',
+                'POST api/refresh' => 'api/refresh',
             ],
         ],
         'request' => [

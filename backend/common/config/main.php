@@ -9,9 +9,5 @@ return [
         'cache' => [
             'class' => \yii\caching\FileCache::class,
         ],
-        'jwt' => [
-            'class' => \sizeg\jwt\Jwt::class,
-            'key' => 'somesecretkey',
-        ],
     ],
 ];

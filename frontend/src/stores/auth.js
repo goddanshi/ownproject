@@ -5,15 +5,16 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     isAuthenticated: false,
-    loading: false,
-    token: localStorage.getItem('token') || null
+    loading: false
   }),
 
   actions: {
     async checkAuth() {
-      if (!this.token) {
-        this.isAuthenticated = false
+      const token = localStorage.getItem('jwt_token')
+
+      if (!token) {
         this.user = null
+        this.isAuthenticated = false
         return
       }
 
@@ -24,10 +25,14 @@ export const useAuthStore = defineStore('auth', {
           this.user = result.user
           this.isAuthenticated = true
         } else {
-          this.logout()
+          this.user = null
+          this.isAuthenticated = false
+          localStorage.removeItem('jwt_token')
         }
       } catch (error) {
-        this.logout()
+        this.user = null
+        this.isAuthenticated = false
+        localStorage.removeItem('jwt_token')
       } finally {
         this.loading = false
       }
@@ -35,9 +40,7 @@ export const useAuthStore = defineStore('auth', {
 
     async login(username, password) {
       const result = await api.login(username, password)
-      if (result.success && result.token) {
-        this.token = result.token
-        localStorage.setItem('token', result.token)
+      if (result.success) {
         this.user = result.user
         this.isAuthenticated = true
       }
@@ -46,19 +49,17 @@ export const useAuthStore = defineStore('auth', {
 
     async register(username, email, password) {
       const result = await api.register(username, email, password)
+      if (result.success) {
+        this.user = result.user
+        this.isAuthenticated = true
+      }
       return result
     },
 
     async logout() {
-      localStorage.removeItem('token')
-      this.token = null
+      await api.logout()
       this.user = null
       this.isAuthenticated = false
-      try {
-        await api.logout()
-      } catch (e) {
-
-      }
     }
   }
 })

@@ -6,10 +6,7 @@ use yii\rest\Controller;
 use yii\web\Response;
 use common\models\LoginForm;
 use common\models\User;
-use Lcobucci\JWT\Configuration;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
-use Lcobucci\JWT\Signer\Key\InMemory;
-
+use common\components\JwtHelper;
 
 class ApiController extends Controller
 {
@@ -21,7 +18,11 @@ class ApiController extends Controller
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::class,
             'cors' => [
-                'Origin' => ['http://81.19.136.133', 'http://localhost:5173'],
+                'Origin' => [
+                    'http://81.19.136.133',
+                    'http://localhost:5173',
+                    'http://127.0.0.1:5173'
+                ],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -32,15 +33,11 @@ class ApiController extends Controller
         return $behaviors;
     }
 
-    public function beforeAction($action)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        return parent::beforeAction($action);
-    }
-
     // POST /api/register
     public function actionRegister()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         $data = Yii::$app->request->post();
 
         $user = new User();
@@ -53,9 +50,13 @@ class ApiController extends Controller
         $user->updated_at = time();
 
         if ($user->save()) {
+            // Генерируем JWT токен
+            $token = JwtHelper::generateToken($user->id, $user->username, $user->email);
+
             return [
                 'success' => true,
                 'message' => 'Registration successful',
+                'token' => $token,
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
@@ -74,33 +75,20 @@ class ApiController extends Controller
     // POST /api/login
     public function actionLogin()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         $data = Yii::$app->request->post();
 
-        $model = new LoginForm();
-        $model->username = $data['username'] ?? '';
-        $model->password = $data['password'] ?? '';
+        $user = User::findOne(['username' => $data['username'] ?? '']);
 
-        if ($model->login()) {
-            $user = Yii::$app->user->identity;
-
-            $config = Configuration::forSymmetricSigner(
-                new Sha256(),
-                InMemory::plainText('your_secret_key_here')
-            );
-
-            $time = time();
-
-            $token = $config->builder()
-                ->issuedBy('http://81.19.136.133')
-                ->permittedFor('http://81.19.136.133')
-                ->issuedAt(\DateTimeImmutable::createFromFormat('U', $time))
-                ->expiresAt(\DateTimeImmutable::createFromFormat('U', $time + 3600*24*7))
-                ->withClaim('uid', $user->id)
-                ->getToken($config->signer(), $config->signingKey());
+        if ($user && $user->validatePassword($data['password'] ?? '')) {
+            // Генерируем JWT токен
+            $token = JwtHelper::generateToken($user->id, $user->username, $user->email);
 
             return [
                 'success' => true,
-                'token' => $token->toString(),
+                'message' => 'Login successful',
+                'token' => $token,
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
@@ -111,53 +99,75 @@ class ApiController extends Controller
 
         return [
             'success' => false,
-            'message' => 'Invalid username or password',
-            'errors' => $model->errors
+            'message' => 'Invalid username or password'
         ];
     }
 
     // GET /api/check
     public function actionCheck()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         $authHeader = Yii::$app->request->headers->get('Authorization');
-        if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
-            return ['success' => false, 'message' => 'Missing token'];
+
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return ['success' => false, 'message' => 'Token not provided'];
         }
 
-        $tokenStr = $matches[1];
+        $token = $matches[1];
+        $payload = JwtHelper::validateToken($token);
 
-        $config = Configuration::forSymmetricSigner(
-            new Sha256(),
-            InMemory::plainText('your_secret_key_here')
-        );
-
-        try {
-            $token = $config->parser()->parse($tokenStr);
-            $claims = $token->claims();
-            $uid = $claims->get('uid');
-
-            $user = User::findOne($uid);
-            if ($user) {
-                return [
-                    'success' => true,
-                    'user' => [
-                        'id' => $user->id,
-                        'username' => $user->username,
-                        'email' => $user->email,
-                    ]
-                ];
-            }
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Invalid token'];
+        if (!$payload) {
+            return ['success' => false, 'message' => 'Invalid or expired token'];
         }
 
-        return ['success' => false];
+        return [
+            'success' => true,
+            'user' => [
+                'id' => $payload['userId'],
+                'username' => $payload['username'],
+                'email' => $payload['email'],
+            ]
+        ];
     }
-
 
     // POST /api/logout
     public function actionLogout()
     {
-        return ['success' => true, 'message' => 'Logout (client side only)'];
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        // С JWT logout происходит на фронте (удаляем токен)
+        return ['success' => true, 'message' => 'Logged out'];
+    }
+
+    // POST /api/refresh
+    public function actionRefresh()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $authHeader = Yii::$app->request->headers->get('Authorization');
+
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return ['success' => false, 'message' => 'Token not provided'];
+        }
+
+        $token = $matches[1];
+        $payload = JwtHelper::validateToken($token);
+
+        if (!$payload) {
+            return ['success' => false, 'message' => 'Invalid or expired token'];
+        }
+
+        // Генерируем новый токен
+        $newToken = JwtHelper::generateToken(
+            $payload['userId'],
+            $payload['username'],
+            $payload['email']
+        );
+
+        return [
+            'success' => true,
+            'token' => $newToken
+        ];
     }
 }
