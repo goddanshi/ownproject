@@ -10,6 +10,15 @@ const api = axios.create({
   }
 })
 
+// 🔒 автоматически добавляем токен ко всем запросам
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 export default {
   async register(username, email, password) {
     const response = await api.post('/api/register', {
@@ -25,6 +34,7 @@ export default {
       username,
       password
     })
+    // ожидаем что бек вернёт { success: true, token, user }
     return response.data
   },
 

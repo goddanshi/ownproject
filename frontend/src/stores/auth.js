@@ -5,11 +5,18 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     isAuthenticated: false,
-    loading: false
+    loading: false,
+    token: localStorage.getItem('token') || null
   }),
 
   actions: {
     async checkAuth() {
+      if (!this.token) {
+        this.isAuthenticated = false
+        this.user = null
+        return
+      }
+
       this.loading = true
       try {
         const result = await api.checkAuth()
@@ -17,12 +24,10 @@ export const useAuthStore = defineStore('auth', {
           this.user = result.user
           this.isAuthenticated = true
         } else {
-          this.user = null
-          this.isAuthenticated = false
+          this.logout()
         }
       } catch (error) {
-        this.user = null
-        this.isAuthenticated = false
+        this.logout()
       } finally {
         this.loading = false
       }
@@ -30,7 +35,9 @@ export const useAuthStore = defineStore('auth', {
 
     async login(username, password) {
       const result = await api.login(username, password)
-      if (result.success) {
+      if (result.success && result.token) {
+        this.token = result.token
+        localStorage.setItem('token', result.token)
         this.user = result.user
         this.isAuthenticated = true
       }
@@ -43,9 +50,15 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async logout() {
-      await api.logout()
+      localStorage.removeItem('token')
+      this.token = null
       this.user = null
       this.isAuthenticated = false
+      try {
+        await api.logout()
+      } catch (e) {
+
+      }
     }
   }
 })

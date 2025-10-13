@@ -9,5 +9,10 @@ return [
         'cache' => [
             'class' => \yii\caching\FileCache::class,
         ],
+        'jwt' => [
+            'class' => \sizeg\jwt\Jwt::class,
+            'key' => 'your_secret_key_here', // замени на уникальный секрет
+            'jwtValidationData' => \app\components\JwtValidationData::class, // необязательно
+        ],
     ],
 ];

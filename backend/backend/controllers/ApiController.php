@@ -28,11 +28,15 @@ class ApiController extends Controller
         return $behaviors;
     }
 
+    public function beforeAction($action)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return parent::beforeAction($action);
+    }
+
     // POST /api/register
     public function actionRegister()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         $data = Yii::$app->request->post();
 
         $user = new User();
@@ -66,20 +70,33 @@ class ApiController extends Controller
     // POST /api/login
     public function actionLogin()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         $data = Yii::$app->request->post();
 
         $model = new LoginForm();
         $model->username = $data['username'] ?? '';
         $model->password = $data['password'] ?? '';
-        $model->rememberMe = true;
 
         if ($model->login()) {
             $user = Yii::$app->user->identity;
+
+            // Генерация JWT
+            $jwt = Yii::$app->jwt;
+            $signer = $jwt->getSigner('HS256');
+            $key = $jwt->getKey();
+            $time = time();
+
+            $token = $jwt->getBuilder()
+                ->issuedBy('http://81.19.136.133') // кто выдал
+                ->permittedFor('http://81.19.136.133') // кому
+                ->issuedAt($time)
+                ->expiresAt($time + 3600 * 24 * 7) // 7 дней
+                ->withClaim('uid', $user->id)
+                ->getToken($signer, $key);
+
             return [
                 'success' => true,
                 'message' => 'Login successful',
+                'token' => (string) $token,
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
@@ -98,28 +115,40 @@ class ApiController extends Controller
     // GET /api/check
     public function actionCheck()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        if (Yii::$app->user->isGuest) {
-            return ['success' => false, 'message' => 'Not authenticated'];
+        $authHeader = Yii::$app->request->headers->get('Authorization');
+        if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+            return ['success' => false, 'message' => 'Missing token'];
         }
 
-        return [
-            'success' => true,
-            'user' => [
-                'id' => Yii::$app->user->id,
-                'username' => Yii::$app->user->identity->username,
-                'email' => Yii::$app->user->identity->email,
-            ]
-        ];
+        $token = $matches[1];
+        $jwt = Yii::$app->jwt;
+
+        try {
+            $parsed = $jwt->getParser()->parse((string)$token);
+            $uid = $parsed->claims()->get('uid');
+
+            $user = User::findOne($uid);
+            if ($user) {
+                return [
+                    'success' => true,
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                    ]
+                ];
+            }
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Invalid token'];
+        }
+
+        return ['success' => false];
     }
 
     // POST /api/logout
     public function actionLogout()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        Yii::$app->user->logout();
-
-        return ['success' => true, 'message' => 'Logged out'];
+        return ['success' => true, 'message' => 'Logout (client side only)'];
     }
 }
