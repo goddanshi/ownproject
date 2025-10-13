@@ -31,10 +31,6 @@
                 <div class="info-value">{{ authStore.user?.email }}</div>
               </div>
 
-              <div class="info-item">
-                <label>ID пользователя</label>
-                <div class="info-value">#{{ authStore.user?.id }}</div>
-              </div>
 
               <div class="info-item">
                 <label>Дата регистрации</label>
