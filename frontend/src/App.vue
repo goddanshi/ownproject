@@ -2,9 +2,6 @@
   <header>
     <div class="wrapper">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-
         <template v-if="authStore.isAuthenticated">
           <RouterLink to="/dashboard">Dashboard</RouterLink>
           <a @click="handleLogout" class="logout-link">Logout</a>
@@ -34,7 +31,7 @@ onMounted(() => {
 
 const handleLogout = async () => {
   await authStore.logout()
-  router.push('/')
+  router.push('/login')
 }
 </script>
 
