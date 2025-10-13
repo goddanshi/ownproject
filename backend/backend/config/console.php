@@ -10,6 +10,13 @@ return [
     'id' => 'app-backend-console',
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\commands',
+    'bootstrap' => ['log', 'gii'], // включаем gii
+    'modules' => [
+        'gii' => [
+            'class' => \yii\gii\Module::class,
+            'allowedIPs' => ['*'],
+        ],
+    ],
     'components' => [
         'db' => require __DIR__ . '/db.php',
         'log' => [
