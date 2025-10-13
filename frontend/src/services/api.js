@@ -92,5 +92,27 @@ export default {
     const response = await api.post('/api/logout')
     localStorage.removeItem('jwt_token')
     return response.data
+  },
+
+  async getProfile() {
+    const response = await api.get('/user/profile')
+    return response.data
+  },
+
+  async updateProfile(name, surname, email) {
+    const response = await api.post('/user/update-profile', {
+      name,
+      surname,
+      email
+    })
+    return response.data
+  },
+
+  async changePassword(oldPassword, newPassword) {
+    const response = await api.post('/user/change-password', {
+      oldPassword,
+      newPassword
+    })
+    return response.data
   }
 }

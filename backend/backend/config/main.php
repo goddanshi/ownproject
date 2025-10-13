@@ -43,6 +43,12 @@ return [
                 'GET api/check' => 'api/check',
                 'POST api/logout' => 'api/logout',
                 'POST api/refresh' => 'api/refresh',
+
+                // --------------------------------
+                // User routes
+                'GET user/profile' => 'user/profile',
+                'POST user/update-profile' => 'user/update-profile',
+                'POST user/change-password' => 'user/change-password',
             ],
         ],
         'request' => [
