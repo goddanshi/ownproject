@@ -6,7 +6,10 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: (to) => {
+        const authStore = useAuthStore()
+        return authStore.isAuthenticated ? '/dashboard' : '/login'
+      }
     },
     {
       path: '/login',
@@ -47,19 +50,28 @@ const router = createRouter({
   ]
 })
 
+// Упрощённый guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
+  // Ждём проверки авторизации только если ещё не проверяли
   if (authStore.user === null && !authStore.loading) {
     await authStore.checkAuth()
   }
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const isAuthenticated = authStore.isAuthenticated
+  const requiresAuth = to.meta.requiresAuth
+  const isGuestRoute = to.meta.guest
+
+  // Защищённый роут + не авторизован → на логин
+  if (requiresAuth && !isAuthenticated) {
     next('/login')
   }
-  else if (to.meta.guest && authStore.isAuthenticated) {
+  // Гостевой роут (login/register) + авторизован → на dashboard
+  else if (isGuestRoute && isAuthenticated) {
     next('/dashboard')
   }
+  // Всё ок
   else {
     next()
   }

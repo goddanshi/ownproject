@@ -1,20 +1,12 @@
 <template>
   <div class="sidebar-wrapper">
-    <!-- Overlay для мобильных -->
-    <div
-      v-if="isMobileOpen"
-      class="overlay"
-      @click="closeMobile"
-    ></div>
+    <div v-if="isMobileOpen" class="overlay" @click="closeMobile"></div>
 
-    <!-- Сайдбар -->
     <aside :class="['sidebar', { collapsed: isCollapsed }]">
-      <!-- Кнопка сворачивания -->
       <button class="toggle-btn" @click="toggleSidebar">
         {{ isCollapsed ? '>>' : '<<' }}
       </button>
 
-      <!-- Профиль пользователя -->
       <div class="user-section">
         <div class="avatar">
           {{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}
@@ -27,7 +19,6 @@
         </transition>
       </div>
 
-      <!-- Навигация -->
       <nav class="nav-menu">
         <RouterLink
           v-for="item in menuItems"
@@ -37,6 +28,7 @@
           active-class="active"
         >
           <span class="icon">
+            <!-- Правильный способ рендера SVG компонента -->
             <component :is="item.icon" />
           </span>
           <transition name="fade">
@@ -45,11 +37,10 @@
         </RouterLink>
       </nav>
 
-      <!-- Кнопка выхода -->
       <button class="logout-btn" @click="handleLogout">
-        <span class="icon">  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-  </svg></span>
+        <span class="icon">
+          <LogoutIcon />
+        </span>
         <transition name="fade">
           <span v-if="!isCollapsed">Выход</span>
         </transition>
@@ -63,11 +54,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-import EmploersIcon from "@/components/icons/Emploers.vue"
-import DashboardIcon from "@/components/icons/Dashboard.vue";
-import TasksIcon from "@/components/icons/Tasks.vue";
-import RequestIcon from "@/components/icons/Request.vue";
-import LogoutIcon from "@/components/icons/Logout.vue";
+import EmploersIcon from '@/components/icons/Emploers.vue'
+import DashboardIcon from '@/components/icons/Dashboard.vue'
+import TasksIcon from '@/components/icons/Tasks.vue'
+import RequestIcon from '@/components/icons/Request.vue'
+import LogoutIcon from '@/components/icons/Logout.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -113,7 +104,7 @@ const handleLogout = async () => {
 
 .sidebar {
   background: white;
-  border: 1px solid #ccc;
+  border-right: 1px solid #e0e0e0;
   position: fixed;
   left: 0;
   top: 0;
@@ -127,6 +118,7 @@ const handleLogout = async () => {
   z-index: 999;
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
 }
+
 .sidebar.collapsed {
   width: 80px;
 }
@@ -158,13 +150,13 @@ const handleLogout = async () => {
 }
 
 .user-section {
-  background: rgba(255, 255, 255, 0.9);
+  background: #f8f9fa;
   padding: 1.5rem;
   border-radius: 15px;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: padding 0.3s ease;
 }
 
@@ -224,11 +216,10 @@ const handleLogout = async () => {
   padding: 1rem;
   border-radius: 10px;
   text-decoration: none;
-  color: white;
+  color: #555;
   font-weight: 500;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: transparent;
 }
 
 .sidebar.collapsed .nav-item {
@@ -237,19 +228,30 @@ const handleLogout = async () => {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: #f0f0f0;
   transform: translateX(5px);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.9);
-  color: #26c6da;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .icon {
-  font-size: 1.5rem;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Стили для SVG внутри иконок */
+.icon :deep(svg) {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
 }
 
 .label {
@@ -281,7 +283,6 @@ const handleLogout = async () => {
   box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
 }
 
-/* Анимация fade */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.2s ease;
 }
@@ -290,7 +291,6 @@ const handleLogout = async () => {
   opacity: 0;
 }
 
-/* Адаптив */
 @media (max-width: 768px) {
   .sidebar {
     width: 280px;

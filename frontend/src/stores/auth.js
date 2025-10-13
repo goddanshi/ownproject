@@ -5,16 +5,23 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     isAuthenticated: false,
-    loading: false
+    loading: false,
+    checked: false // Флаг что уже проверяли
   }),
 
   actions: {
     async checkAuth() {
+      // Если уже проверяли - не проверяем снова
+      if (this.checked) {
+        return
+      }
+
       const token = localStorage.getItem('jwt_token')
 
       if (!token) {
         this.user = null
         this.isAuthenticated = false
+        this.checked = true
         return
       }
 
@@ -35,6 +42,7 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('jwt_token')
       } finally {
         this.loading = false
+        this.checked = true
       }
     },
 
@@ -43,6 +51,7 @@ export const useAuthStore = defineStore('auth', {
       if (result.success) {
         this.user = result.user
         this.isAuthenticated = true
+        this.checked = true
       }
       return result
     },
@@ -52,6 +61,7 @@ export const useAuthStore = defineStore('auth', {
       if (result.success) {
         this.user = result.user
         this.isAuthenticated = true
+        this.checked = true
       }
       return result
     },
@@ -60,6 +70,7 @@ export const useAuthStore = defineStore('auth', {
       await api.logout()
       this.user = null
       this.isAuthenticated = false
+      this.checked = false
     }
   }
 })
