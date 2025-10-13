@@ -1,55 +1,47 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import DashboardView from '../views/DashboardView.vue'
-import WorkersView from '../views/WorkersView.vue'
-import TasksView from '../views/TasksView.vue'
-import RequestsView from '../views/RequestsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      redirect: '/login'
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView,
+      component: () => import('../views/LoginView.vue'),
       meta: { guest: true }
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView,
+      component: () => import('../views/RegisterView.vue'),
       meta: { guest: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView,
+      component: () => import('../views/DashboardView.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/workers',
       name: 'workers',
-      component: WorkersView,
+      component: () => import('../views/WorkersView.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/tasks',
       name: 'tasks',
-      component: TasksView,
+      component: () => import('../views/TasksView.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/requests',
       name: 'requests',
-      component: RequestsView,
+      component: () => import('../views/RequestsView.vue'),
       meta: { requiresAuth: true }
     },
     {
