@@ -1,57 +1,62 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      redirect: '/login'
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView,
-      meta: { guest: true } // Доступно только гостям
+      component: () => import('../views/LoginView.vue'),
+      meta: { guest: true }
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView,
+      component: () => import('../views/RegisterView.vue'),
       meta: { guest: true }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true } // Требует авторизацию
+      meta: { requiresAuth: true }
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue')
-    }
+      path: '/workers',
+      name: 'workers',
+      component: () => import('../views/WorkersView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/tasks',
+      name: 'tasks',
+      component: () => import('../views/TasksView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/requests',
+      name: 'requests',
+      component: () => import('../views/RequestsView.vue'),
+      meta: { requiresAuth: true }
+    },
   ]
 })
 
-// Guard для проверки авторизации
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Проверяем авторизацию при первой загрузке
   if (authStore.user === null && !authStore.loading) {
     await authStore.checkAuth()
   }
 
-  // Если роут требует авторизацию
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   }
-  // Если роут только для гостей (login/register), а пользователь уже залогинен
   else if (to.meta.guest && authStore.isAuthenticated) {
     next('/dashboard')
   }
