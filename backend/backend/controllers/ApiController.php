@@ -6,6 +6,10 @@ use yii\rest\Controller;
 use yii\web\Response;
 use common\models\LoginForm;
 use common\models\User;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key\InMemory;
+
 
 class ApiController extends Controller
 {
@@ -79,24 +83,24 @@ class ApiController extends Controller
         if ($model->login()) {
             $user = Yii::$app->user->identity;
 
-            // Генерация JWT
-            $jwt = Yii::$app->jwt;
-            $signer = $jwt->getSigner('HS256');
-            $key = $jwt->getKey();
+            $config = Configuration::forSymmetricSigner(
+                new Sha256(),
+                InMemory::plainText('your_secret_key_here')
+            );
+
             $time = time();
 
-            $token = $jwt->getBuilder()
-                ->issuedBy('http://81.19.136.133') // кто выдал
-                ->permittedFor('http://81.19.136.133') // кому
-                ->issuedAt($time)
-                ->expiresAt($time + 3600 * 24 * 7) // 7 дней
+            $token = $config->builder()
+                ->issuedBy('http://81.19.136.133')
+                ->permittedFor('http://81.19.136.133')
+                ->issuedAt(\DateTimeImmutable::createFromFormat('U', $time))
+                ->expiresAt(\DateTimeImmutable::createFromFormat('U', $time + 3600*24*7))
                 ->withClaim('uid', $user->id)
-                ->getToken($signer, $key);
+                ->getToken($config->signer(), $config->signingKey());
 
             return [
                 'success' => true,
-                'message' => 'Login successful',
-                'token' => (string) $token,
+                'token' => $token->toString(),
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
@@ -120,12 +124,17 @@ class ApiController extends Controller
             return ['success' => false, 'message' => 'Missing token'];
         }
 
-        $token = $matches[1];
-        $jwt = Yii::$app->jwt;
+        $tokenStr = $matches[1];
+
+        $config = Configuration::forSymmetricSigner(
+            new Sha256(),
+            InMemory::plainText('your_secret_key_here')
+        );
 
         try {
-            $parsed = $jwt->getParser()->parse((string)$token);
-            $uid = $parsed->claims()->get('uid');
+            $token = $config->parser()->parse($tokenStr);
+            $claims = $token->claims();
+            $uid = $claims->get('uid');
 
             $user = User::findOne($uid);
             if ($user) {
@@ -138,13 +147,13 @@ class ApiController extends Controller
                     ]
                 ];
             }
-
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
         return ['success' => false];
     }
+
 
     // POST /api/logout
     public function actionLogout()
