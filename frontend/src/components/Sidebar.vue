@@ -36,7 +36,9 @@
           class="nav-item"
           active-class="active"
         >
-          <span class="icon">{{ item.icon }}</span>
+          <span class="icon">
+            <component :is="item.icon" />
+          </span>
           <transition name="fade">
             <span v-if="!isCollapsed" class="label">{{ item.label }}</span>
           </transition>
@@ -110,20 +112,13 @@ const handleLogout = async () => {
 }
 
 .sidebar {
+  background: white;
+  border: 1px solid #ccc;
   position: fixed;
   left: 0;
   top: 0;
   height: 100vh;
   width: 280px;
-  background: linear-gradient(135deg,
-  #e0f7fa 0%,
-  #b2ebf2 25%,
-  #80deea 50%,
-  #4dd0e1 75%,
-  #26c6da 100%
-  );
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
   padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
@@ -132,13 +127,6 @@ const handleLogout = async () => {
   z-index: 999;
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
 }
-
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 .sidebar.collapsed {
   width: 80px;
 }
