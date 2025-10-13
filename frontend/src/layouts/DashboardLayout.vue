@@ -2,7 +2,7 @@
   <div class="dashboard-layout">
     <Sidebar />
 
-    <main :class="['main-content', { collapsed: isCollapsed }]">
+    <main :class="['main-content', { collapsed: sidebarCollapsed }]">
       <div class="content-wrapper">
         <slot />
       </div>
@@ -11,20 +11,37 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 
-const isCollapsed = ref(false)
+// Функция для обновления состояния
+const updateSidebarState = () => {
+  sidebarCollapsed.value = localStorage.getItem('sidebar-collapsed') === 'true'
+}
 
-provide('sidebarCollapsed', isCollapsed)
+// Слушаем изменения localStorage
+onMounted(() => {
+  window.addEventListener('storage', updateSidebarState)
+  // Проверяем при монтировании
+  updateSidebarState()
+
+  // Периодически проверяем (на случай изменений в том же табе)
+  const interval = setInterval(updateSidebarState, 100)
+
+  onUnmounted(() => {
+    window.removeEventListener('storage', updateSidebarState)
+    clearInterval(interval)
+  })
+})
 </script>
 
 <style scoped>
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #f5f5f7;
 }
 
 .main-content {

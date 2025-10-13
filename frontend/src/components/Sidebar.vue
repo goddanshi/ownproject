@@ -23,7 +23,6 @@
           :to="item.path"
           class="nav-item"
           active-class="active"
-          @click.stop
         >
           <span class="icon">
             <component :is="item.icon" />
@@ -35,7 +34,7 @@
       </nav>
 
       <!-- Кнопка выхода -->
-      <button class="logout-btn" @click.stop="handleLogout">
+      <button class="logout-btn" @click="handleLogout">
         <span class="icon">
           <LogoutIcon />
         </span>
@@ -48,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -61,7 +60,8 @@ import LogoutIcon from '@/components/icons/Logout.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isCollapsed = ref(false)
+// Загружаем состояние из localStorage при инициализации
+const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 const isMobileOpen = ref(false)
 
 const menuItems = [
@@ -83,6 +83,19 @@ const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
+
+// Сохраняем состояние в localStorage при изменении
+watch(isCollapsed, (newValue) => {
+  localStorage.setItem('sidebar-collapsed', newValue.toString())
+})
+
+// При монтировании проверяем localStorage
+onMounted(() => {
+  const savedState = localStorage.getItem('sidebar-collapsed')
+  if (savedState !== null) {
+    isCollapsed.value = savedState === 'true'
+  }
+})
 </script>
 
 <style scoped>
