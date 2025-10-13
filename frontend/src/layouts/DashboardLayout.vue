@@ -14,6 +14,7 @@
 import { ref, provide } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 
+
 const isCollapsed = ref(false)
 
 provide('sidebarCollapsed', isCollapsed)

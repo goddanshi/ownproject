@@ -45,7 +45,9 @@
 
       <!-- Кнопка выхода -->
       <button class="logout-btn" @click="handleLogout">
-        <span class="icon">🚪</span>
+        <span class="icon">  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+  </svg></span>
         <transition name="fade">
           <span v-if="!isCollapsed">Выход</span>
         </transition>
@@ -59,6 +61,12 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
+import EmploersIcon from "@/components/icons/Emploers.vue"
+import DashboardIcon from "@/components/icons/Dashboard.vue";
+import TasksIcon from "@/components/icons/Tasks.vue";
+import RequestIcon from "@/components/icons/Request.vue";
+import LogoutIcon from "@/components/icons/Logout.vue";
+
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -66,10 +74,10 @@ const isCollapsed = ref(false)
 const isMobileOpen = ref(false)
 
 const menuItems = [
-  { path: '/dashboard', label: 'Дашборд', icon: '📊' },
-  { path: '/workers', label: 'Работники', icon: '👥' },
-  { path: '/tasks', label: 'Задачи', icon: '✅' },
-  { path: '/requests', label: 'Заявки', icon: '📝' },
+  { path: '/dashboard', label: 'Дашборд', icon: DashboardIcon },
+  { path: '/workers', label: 'Работники', icon: EmploersIcon },
+  { path: '/tasks', label: 'Задачи', icon: TasksIcon },
+  { path: '/requests', label: 'Заявки', icon: RequestIcon },
 ]
 
 const toggleSidebar = () => {
