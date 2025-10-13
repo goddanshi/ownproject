@@ -23,6 +23,7 @@
           :to="item.path"
           class="nav-item"
           active-class="active"
+          @click.stop
         >
           <span class="icon">
             <component :is="item.icon" />
@@ -34,7 +35,7 @@
       </nav>
 
       <!-- Кнопка выхода -->
-      <button class="logout-btn" @click="handleLogout">
+      <button class="logout-btn" @click.stop="handleLogout">
         <span class="icon">
           <LogoutIcon />
         </span>
@@ -182,6 +183,7 @@ const handleLogout = async () => {
   font-weight: 500;
   transition: all 0.2s ease;
   background: transparent;
+  position: relative;
 }
 
 .sidebar.collapsed .nav-item {
@@ -230,6 +232,7 @@ const handleLogout = async () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .sidebar.collapsed .logout-btn {
