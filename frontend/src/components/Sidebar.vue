@@ -7,18 +7,15 @@
         {{ isCollapsed ? '>>' : '<<' }}
       </button>
 
-      <div class="user-section">
-        <div class="avatar">
-          {{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}
-        </div>
+      <!-- Логотип или название системы -->
+      <div class="sidebar-logo">
         <transition name="fade">
-          <div v-if="!isCollapsed" class="user-info">
-            <h3>{{ authStore.user?.username }}</h3>
-            <p>{{ authStore.user?.email }}</p>
-          </div>
+          <span v-if="!isCollapsed" class="logo-text">CRM System</span>
+          <span v-else class="logo-short">CRM</span>
         </transition>
       </div>
 
+      <!-- Навигация -->
       <nav class="nav-menu">
         <RouterLink
           v-for="item in menuItems"
@@ -28,7 +25,6 @@
           active-class="active"
         >
           <span class="icon">
-            <!-- Правильный способ рендера SVG компонента -->
             <component :is="item.icon" />
           </span>
           <transition name="fade">
@@ -37,6 +33,7 @@
         </RouterLink>
       </nav>
 
+      <!-- Кнопка выхода -->
       <button class="logout-btn" @click="handleLogout">
         <span class="icon">
           <LogoutIcon />
@@ -116,7 +113,6 @@ const handleLogout = async () => {
   gap: 2rem;
   transition: width 0.3s ease;
   z-index: 999;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed {
@@ -131,8 +127,8 @@ const handleLogout = async () => {
   height: 30px;
   border-radius: 50%;
   background: white;
-  border: 2px solid #26c6da;
-  color: #26c6da;
+  border: 2px solid #2d3748;
+  color: #2d3748;
   font-weight: bold;
   cursor: pointer;
   display: flex;
@@ -144,62 +140,28 @@ const handleLogout = async () => {
 }
 
 .toggle-btn:hover {
-  background: #26c6da;
+  background: #2d3748;
   color: white;
   transform: scale(1.1);
 }
 
-.user-section {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: padding 0.3s ease;
-}
-
-.sidebar.collapsed .user-section {
+.sidebar-logo {
+  text-align: center;
   padding: 1rem;
-  justify-content: center;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 1rem;
 }
 
-.avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
-.user-info {
-  overflow: hidden;
-}
-
-.user-info h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-info p {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-  color: #666;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.logo-short {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .nav-menu {
@@ -214,11 +176,11 @@ const handleLogout = async () => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  border-radius: 10px;
+  border-radius: 6px;
   text-decoration: none;
   color: #555;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   background: transparent;
 }
 
@@ -228,14 +190,12 @@ const handleLogout = async () => {
 }
 
 .nav-item:hover {
-  background: #f0f0f0;
-  transform: translateX(5px);
+  background: #f5f5f7;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2d3748;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .icon {
@@ -247,7 +207,6 @@ const handleLogout = async () => {
   justify-content: center;
 }
 
-/* Стили для SVG внутри иконок */
 .icon :deep(svg) {
   width: 24px;
   height: 24px;
@@ -256,6 +215,7 @@ const handleLogout = async () => {
 
 .label {
   white-space: nowrap;
+  font-size: 0.9rem;
 }
 
 .logout-btn {
@@ -264,12 +224,12 @@ const handleLogout = async () => {
   gap: 1rem;
   padding: 1rem;
   border: none;
-  border-radius: 10px;
-  background: rgba(244, 67, 54, 0.9);
-  color: white;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .sidebar.collapsed .logout-btn {
@@ -278,9 +238,7 @@ const handleLogout = async () => {
 }
 
 .logout-btn:hover {
-  background: rgba(244, 67, 54, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  background: #fee2e2;
 }
 
 .fade-enter-active, .fade-leave-active {
