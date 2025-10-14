@@ -52,18 +52,19 @@ const router = createRouter({
       name: 'requests',
       component: () => import('../views/RequestsView.vue'),
       meta: { requiresAuth: true }
-    },
-
+    }
   ]
 })
 
-// Navigation guard
+// Navigation guard с лоадером
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
   // Ждём проверки авторизации только если ещё не проверяли
-  if (authStore.user === null && !authStore.loading) {
+  if (!authStore.checked) {
+    authStore.loading = true
     await authStore.checkAuth()
+    authStore.loading = false
   }
 
   const isAuthenticated = authStore.isAuthenticated

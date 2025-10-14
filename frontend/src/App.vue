@@ -1,4 +1,8 @@
 <template>
+  <!-- Глобальный лоадер -->
+  <GlobalLoader :show="authStore.loading" text="Проверка авторизации..." />
+
+  <!-- Основной контент -->
   <div v-if="!authStore.loading">
     <header v-if="!authStore.isAuthenticated && showHeader">
       <div class="wrapper">
@@ -11,17 +15,13 @@
 
     <RouterView />
   </div>
-
-  <div v-else class="loading-screen">
-    <div class="spinner"></div>
-    <p>Загрузка...</p>
-  </div>
 </template>
 
 <script setup>
 import { computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from './stores/auth.js' // ИСПРАВЛЕНО: stores/auth.js
+import { useAuthStore } from './stores/auth'
+import GlobalLoader from './components/GlobalLoader.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -78,33 +78,5 @@ nav a {
 
 nav a:hover {
   background: #f0f0f0;
-}
-
-.loading-screen {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #f5f5f7;
-  color: #666;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(0,0,0,0.1);
-  border-top-color: #2d3748;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-screen p {
-  margin-top: 1rem;
-  font-size: 1.2rem;
 }
 </style>
