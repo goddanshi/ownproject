@@ -1,6 +1,5 @@
 <template>
   <div v-if="!authStore.loading">
-    <!-- Показываем хедер только для неавторизованных -->
     <header v-if="!authStore.isAuthenticated && showHeader">
       <div class="wrapper">
         <nav>
@@ -13,7 +12,6 @@
     <RouterView />
   </div>
 
-  <!-- Лоадер пока проверяется авторизация -->
   <div v-else class="loading-screen">
     <div class="spinner"></div>
     <p>Загрузка...</p>
@@ -23,13 +21,12 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from './services/auth.js'
+import { useAuthStore } from './stores/auth.js' // ИСПРАВЛЕНО: stores/auth.js
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// Показывать ли хедер (не показываем на login/register)
 const showHeader = computed(() => {
   return !['/login', '/register'].includes(route.path)
 })
@@ -37,7 +34,6 @@ const showHeader = computed(() => {
 onMounted(async () => {
   await authStore.checkAuth()
 
-  // После проверки редиректим
   if (authStore.isAuthenticated && ['/login', '/register', '/'].includes(route.path)) {
     router.push('/dashboard')
   } else if (!authStore.isAuthenticated && route.meta.requiresAuth) {
@@ -45,7 +41,6 @@ onMounted(async () => {
   }
 })
 
-// Следим за изменением авторизации
 watch(() => authStore.isAuthenticated, (isAuth) => {
   if (isAuth && ['/login', '/register', '/'].includes(route.path)) {
     router.push('/dashboard')
@@ -91,15 +86,15 @@ nav a:hover {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #f5f5f7;
+  color: #666;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(255,255,255,0.3);
-  border-top-color: white;
+  border: 5px solid rgba(0,0,0,0.1);
+  border-top-color: #2d3748;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
