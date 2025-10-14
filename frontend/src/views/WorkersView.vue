@@ -1,5 +1,8 @@
 <template>
   <DashboardLayout>
+    <template #header-left>
+      <h1>Работники</h1>
+    </template>
     <div class="page">
       <h1>👥 Работники</h1>
       <p>Здесь будет список работников</p>

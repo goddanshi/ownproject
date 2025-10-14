@@ -1,5 +1,8 @@
 <template>
   <DashboardLayout>
+    <template #header-left>
+      <h1>Заявки</h1>
+    </template>
     <div class="page">
       <h1>📝 Заявки</h1>
       <p>Здесь будет список заявок</p>

@@ -3,22 +3,7 @@
     <div class="dashboard">
       <div class="dashboard-header">
         <div>
-          <h1>Панель управления</h1>
           <p class="subtitle">Добро пожаловать в систему</p>
-        </div>
-
-        <div class="header-right">
-          <div class="date-info">{{ currentDate }}</div>
-
-          <RouterLink to="/profile" class="user-profile">
-            <div class="user-info">
-              <span class="user-name">{{ authStore.user?.username }}</span>
-              <span class="user-email">{{ authStore.user?.email }}</span>
-            </div>
-            <div class="user-avatar">
-              {{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}
-            </div>
-          </RouterLink>
         </div>
       </div>
 

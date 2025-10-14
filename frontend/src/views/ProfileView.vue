@@ -1,5 +1,8 @@
 <template>
   <DashboardLayout>
+    <template #header-left>
+      <h1>Профиль</h1>
+    </template>
     <div class="profile">
       <div class="profile-header">
         <h1>Профиль пользователя</h1>
