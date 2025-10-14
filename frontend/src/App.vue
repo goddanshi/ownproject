@@ -18,12 +18,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import GlobalLoader from './components/GlobalLoader.vue'
 
-const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
@@ -31,23 +30,8 @@ const showHeader = computed(() => {
   return !['/login', '/register'].includes(route.path)
 })
 
-onMounted(async () => {
-  await authStore.checkAuth()
-
-  if (authStore.isAuthenticated && ['/login', '/register', '/'].includes(route.path)) {
-    router.push('/dashboard')
-  } else if (!authStore.isAuthenticated && route.meta.requiresAuth) {
-    router.push('/login')
-  }
-})
-
-watch(() => authStore.isAuthenticated, (isAuth) => {
-  if (isAuth && ['/login', '/register', '/'].includes(route.path)) {
-    router.push('/dashboard')
-  } else if (!isAuth && route.meta.requiresAuth) {
-    router.push('/login')
-  }
-})
+// ВСЁ! Никаких onMounted и watch!
+// Роутер сам всё сделает через beforeEach
 </script>
 
 <style scoped>
