@@ -6,11 +6,16 @@
         <p class="subtitle">Управление личными данными</p>
       </div>
 
-      <div class="profile-content">
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Загрузка профиля...</p>
+      </div>
+
+      <div v-else class="profile-content">
         <div class="profile-card">
           <div class="profile-avatar-section">
             <div class="profile-avatar-large">
-              {{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}
+              {{ profileData?.username?.[0]?.toUpperCase() || 'U' }}
             </div>
             <button class="change-avatar-btn" disabled>
               Изменить фото
@@ -23,13 +28,13 @@
             <div class="info-grid">
               <div class="info-item">
                 <label>Логин</label>
-                <div class="info-value">{{ authStore.user?.username || '—' }}</div>
+                <div class="info-value">{{ profileData?.username || '—' }}</div>
               </div>
 
               <div class="info-item">
                 <label>Имя</label>
                 <div class="info-value-with-edit">
-                  <span class="info-value">{{ user.name || '—' }}</span>
+                  <span class="info-value">{{ profileData?.name || '—' }}</span>
                   <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
                     <component :is="EditIcon" />
                   </button>
@@ -39,7 +44,7 @@
               <div class="info-item">
                 <label>Фамилия</label>
                 <div class="info-value-with-edit">
-                  <span class="info-value">{{ user.surname || '—' }}</span>
+                  <span class="info-value">{{ profileData?.surname || '—' }}</span>
                   <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
                     <component :is="EditIcon" />
                   </button>
@@ -48,7 +53,7 @@
 
               <div class="info-item">
                 <label>Email</label>
-                <div class="info-value">{{ user.email || '—' }}</div>
+                <div class="info-value">{{ profileData?.email || '—' }}</div>
               </div>
 
               <div class="info-item">
@@ -223,11 +228,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
-import { useAuthStore } from '../services/auth.js'
-import user from '../services/me.js'
+import userApi from '../services/me.js'
 import EditIcon from '@/components/icons/EditPencil.vue'
 
-const authStore = useAuthStore()
+// Локальное состояние профиля
+const profileData = ref(null)
+const loading = ref(true)
 
 // Модалка редактирования
 const showEditModal = ref(false)
@@ -251,11 +257,12 @@ const passwordLoading = ref(false)
 const passwordMessage = ref('')
 const passwordMessageType = ref('')
 
+// Дата регистрации
 const registrationDate = computed(() => {
-  if (!authStore.user?.created_at) {
+  if (!profileData.value?.created_at) {
     return '—'
   }
-  const date = new Date(authStore.user.created_at * 1000)
+  const date = new Date(profileData.value.created_at * 1000)
   return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
@@ -263,24 +270,33 @@ const registrationDate = computed(() => {
   })
 })
 
-// Загрузка профиля при монтировании
-onMounted(async () => {
+// Загрузка профиля
+const loadProfile = async () => {
+  loading.value = true
   try {
-    const result = await user.getProfile()
+    const result = await userApi.getProfile()
+    console.log('Profile loaded:', result)
+
     if (result.success) {
-      authStore.user = result.user
+      profileData.value = result.user
     }
   } catch (error) {
     console.error('Failed to load profile:', error)
+  } finally {
+    loading.value = false
   }
+}
+
+onMounted(() => {
+  loadProfile()
 })
 
 // Открыть модалку редактирования
 const openEditModal = () => {
   editForm.value = {
-    name: authStore.user?.name || '',
-    surname: authStore.user?.surname || '',
-    email: authStore.user?.email || ''
+    name: profileData.value?.name || '',
+    surname: profileData.value?.surname || '',
+    email: profileData.value?.email || ''
   }
   editMessage.value = ''
   showEditModal.value = true
@@ -298,14 +314,16 @@ const handleUpdateProfile = async () => {
   editMessage.value = ''
 
   try {
-    const result = await user.updateProfile(
+    const result = await userApi.updateProfile(
       editForm.value.name,
       editForm.value.surname,
       editForm.value.email
     )
 
+    console.log('Update result:', result)
+
     if (result.success) {
-      authStore.user = result.user
+      profileData.value = result.user
       editMessage.value = 'Профиль успешно обновлён'
       editMessageType.value = 'success'
 
@@ -317,6 +335,7 @@ const handleUpdateProfile = async () => {
       editMessageType.value = 'error'
     }
   } catch (error) {
+    console.error('Update error:', error)
     editMessage.value = 'Ошибка подключения к серверу'
     editMessageType.value = 'error'
   } finally {
@@ -353,10 +372,12 @@ const handleChangePassword = async () => {
   passwordMessage.value = ''
 
   try {
-    const result = await user.changePassword(
+    const result = await userApi.changePassword(
       passwordForm.value.oldPassword,
       passwordForm.value.newPassword
     )
+
+    console.log('Password change result:', result)
 
     if (result.success) {
       passwordMessage.value = 'Пароль успешно изменён'
@@ -370,6 +391,7 @@ const handleChangePassword = async () => {
       passwordMessageType.value = 'error'
     }
   } catch (error) {
+    console.error('Password change error:', error)
     passwordMessage.value = 'Ошибка подключения к серверу'
     passwordMessageType.value = 'error'
   } finally {
@@ -379,7 +401,183 @@ const handleChangePassword = async () => {
 </script>
 
 <style scoped>
-/* Предыдущие стили + добавляем новые */
+.profile {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  gap: 1.5rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #2d3748;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading p {
+  margin: 0;
+  font-size: 1rem;
+  color: #666;
+}
+
+.profile-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.profile-card,
+.settings-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.profile-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+}
+
+.profile-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.change-avatar-btn {
+  padding: 0.5rem 1rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.profile-info-section h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-item label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  padding: 0.75rem 1rem;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.info-value-with-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-value-with-edit .info-value {
+  flex: 1;
+}
+
+.edit-icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.edit-icon-btn:hover {
+  background: #2d3748;
+  border-color: #2d3748;
+  color: white;
+}
+
+.edit-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
 
 .btn-primary {
   padding: 0.75rem 1.5rem;
@@ -418,6 +616,107 @@ const handleChangePassword = async () => {
 .btn-secondary:hover {
   border-color: #2d3748;
   background: #f5f5f7;
+}
+
+.settings-card h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-item:last-of-type {
+  border-bottom: none;
+}
+
+.setting-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.setting-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: not-allowed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e0e0e0;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: #2d3748;
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.danger-zone {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.danger-zone h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: not-allowed;
 }
 
 /* Модалка */
@@ -560,219 +859,6 @@ const handleChangePassword = async () => {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e0e0e0;
-}
-
-/* Остальные стили остаются без изменений */
-.profile {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.profile-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #666;
-}
-
-.profile-content {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.profile-card,
-.settings-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.profile-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2rem;
-}
-
-.profile-avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.profile-avatar-large {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.change-avatar-btn {
-  padding: 0.5rem 1rem;
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: not-allowed;
-  color: #999;
-}
-
-.profile-info-section h2 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.info-item label {
-  display: block;
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.info-value {
-  font-size: 1rem;
-  color: #1a1a1a;
-  padding: 0.75rem 1rem;
-  background: #fafafa;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-}
-
-.profile-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.settings-card h2 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.setting-item:last-of-type {
-  border-bottom: none;
-}
-
-.setting-info h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.setting-info p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 28px;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: not-allowed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #e0e0e0;
-  transition: 0.3s;
-  border-radius: 28px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-.toggle input:checked + .toggle-slider {
-  background-color: #2d3748;
-}
-
-.toggle input:checked + .toggle-slider:before {
-  transform: translateX(22px);
-}
-
-.danger-zone {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid #f0f0f0;
-}
-
-.danger-zone h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #991b1b;
-}
-
-.btn-danger {
-  padding: 0.75rem 1.5rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #991b1b;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
