@@ -47,7 +47,7 @@ return [
                 // --------------------------------
                 // User routes
                 'GET user/profile' => 'user/profile',
-                'GET user/profiles' => 'user/profile',
+                'GET user/profiles' => 'user/profiles',
                 'POST user/update-profile' => 'user/update-profile',
                 'POST user/change-password' => 'user/change-password',
             ],
