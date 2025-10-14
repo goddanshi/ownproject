@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../services/auth.js'
+import { useAuthStore } from '../stores/auth' // ИСПРАВЛЕНО: stores/auth
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +30,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/ProfileView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/workers',
       name: 'workers',
       component: () => import('../views/WorkersView.vue'),
@@ -48,15 +54,14 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/profile',
-      name: 'profile',
-      component: () => import('../views/ProfileView.vue'),
-      meta: { requiresAuth: true }
-    },
+      path: '/about',
+      name: 'about',
+      component: () => import('../views/AboutView.vue')
+    }
   ]
 })
 
-// Упрощённый guard
+// Navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
