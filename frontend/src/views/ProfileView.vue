@@ -29,9 +29,9 @@
               <div class="info-item">
                 <label>Имя</label>
                 <div class="info-value-with-edit">
-                  <span class="info-value">{{ authStore.user?.name || '—' }}</span>
+                  <span class="info-value">{{ user.name || '—' }}</span>
                   <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
-                    <EditIcon />
+                    <component :is="EditIcon" />
                   </button>
                 </div>
               </div>
@@ -39,16 +39,16 @@
               <div class="info-item">
                 <label>Фамилия</label>
                 <div class="info-value-with-edit">
-                  <span class="info-value">{{ authStore.user?.surname || '—' }}</span>
+                  <span class="info-value">{{ user.surname || '—' }}</span>
                   <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
-                    <EditIcon />
+                    <component :is="EditIcon" />
                   </button>
                 </div>
               </div>
 
               <div class="info-item">
                 <label>Email</label>
-                <div class="info-value">{{ authStore.user?.email || '—' }}</div>
+                <div class="info-value">{{ user.email || '—' }}</div>
               </div>
 
               <div class="info-item">
