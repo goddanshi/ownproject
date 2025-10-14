@@ -22,8 +22,18 @@
 
             <div class="info-grid">
               <div class="info-item">
-                <label>Имя пользователя</label>
+                <label>Логин</label>
                 <div class="info-value">{{ authStore.user?.username }}</div>
+              </div>
+
+              <div class="info-item">
+                <label>Имя</label>
+                <div class="info-value">{{ authStore.user?.name }}</div>
+              </div>
+
+              <div class="info-item">
+                <label>Фамилия</label>
+                <div class="info-value">{{ authStore.user?.surname }}</div>
               </div>
 
               <div class="info-item">
