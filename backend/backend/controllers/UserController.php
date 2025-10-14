@@ -179,46 +179,6 @@ class UserController extends Controller
     }
 
     // GET /user/profile
-    public function actionProfile()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        // Проверяем JWT токен
-        $authHeader = Yii::$app->request->headers->get('Authorization');
-
-        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return ['success' => false, 'message' => 'Unauthorized'];
-        }
-
-        $token = $matches[1];
-        $payload = JwtHelper::validateToken($token);
-
-        if (!$payload) {
-            return ['success' => false, 'message' => 'Invalid token'];
-        }
-
-        // Находим пользователя
-        $user = User::findOne($payload['userId']);
-
-        if (!$user) {
-            return ['success' => false, 'message' => 'User not found'];
-        }
-
-        return [
-            'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'name' => $user->name,
-                'surname' => $user->surname,
-                'email' => $user->email,
-                'role' => $user->role,
-                'status' => $user->status,
-                'created_at' => $user->created_at,
-            ]
-        ];
-    }
-
     public function actionProfiles()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -237,23 +197,31 @@ class UserController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        // Получаем всех пользователей
+        // Получаем всех активных пользователей
         $users = User::find()
             ->where(['status' => User::STATUS_ACTIVE])
             ->all();
 
         if (empty($users)) {
-            return ['success' => false, 'message' => 'No users found'];
+            return [
+                'success' => true,
+                'users' => [],
+                'total' => 0
+            ];
         }
 
         // Формируем массив пользователей
         $usersData = [];
         foreach ($users as $user) {
             $usersData[] = [
+                'id' => $user->id,
+                'username' => $user->username,
                 'name' => $user->name,
                 'surname' => $user->surname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'status' => $user->status,
+                'created_at' => $user->created_at,
             ];
         }
 

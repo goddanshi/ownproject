@@ -182,10 +182,14 @@ const loadProfiles = async () => {
     console.log('Profiles loaded:', result)
 
     if (result.success) {
-      profilesData.value = result.users
+      // Проверка что users существует и это массив
+      profilesData.value = Array.isArray(result.users) ? result.users : []
+    } else {
+      profilesData.value = []
     }
   } catch (error) {
     console.error('Failed to load profiles:', error)
+    profilesData.value = []
   } finally {
     loading.value = false
   }
