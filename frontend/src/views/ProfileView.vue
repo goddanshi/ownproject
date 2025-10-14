@@ -263,11 +263,7 @@ const registrationDate = computed(() => {
     return '—'
   }
   const date = new Date(profileData.value.created_at * 1000)
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+  return date.toLocaleDateString('ru-RU') // 14.10.2025
 })
 
 // Загрузка профиля
