@@ -23,24 +23,23 @@
             <div class="info-grid">
               <div class="info-item">
                 <label>Логин</label>
-                <div class="info-value">{{ authStore.user?.username }}</div>
+                <div class="info-value">{{ authStore.user?.username || '—' }}</div>
               </div>
 
               <div class="info-item">
                 <label>Имя</label>
-                <div class="info-value">{{ authStore.user?.name }}</div>
+                <div class="info-value">{{ authStore.user?.name || '—' }}</div>
               </div>
 
               <div class="info-item">
                 <label>Фамилия</label>
-                <div class="info-value">{{ authStore.user?.surname }}</div>
+                <div class="info-value">{{ authStore.user?.surname || '—' }}</div>
               </div>
 
               <div class="info-item">
                 <label>Email</label>
-                <div class="info-value">{{ authStore.user?.email }}</div>
+                <div class="info-value">{{ authStore.user?.email || '—' }}</div>
               </div>
-
 
               <div class="info-item">
                 <label>Дата регистрации</label>
@@ -49,11 +48,11 @@
             </div>
 
             <div class="profile-actions">
-              <button class="btn-secondary" disabled>
-                Изменить пароль
-              </button>
-              <button class="btn-secondary" disabled>
+              <button class="btn-primary" @click="openEditModal">
                 Редактировать профиль
+              </button>
+              <button class="btn-secondary" @click="openPasswordModal">
+                Изменить пароль
               </button>
             </div>
           </div>
@@ -92,27 +91,467 @@
           </div>
         </div>
       </div>
+
+      <!-- Модалка редактирования профиля -->
+      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Редактировать профиль</h2>
+            <button class="modal-close" @click="closeEditModal">✕</button>
+          </div>
+
+          <form @submit.prevent="handleUpdateProfile">
+            <div class="form-group">
+              <label for="edit-name">Имя</label>
+              <input
+                id="edit-name"
+                v-model="editForm.name"
+                type="text"
+                placeholder="Введите имя"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-surname">Фамилия</label>
+              <input
+                id="edit-surname"
+                v-model="editForm.surname"
+                type="text"
+                placeholder="Введите фамилию"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-email">Email</label>
+              <input
+                id="edit-email"
+                v-model="editForm.email"
+                type="email"
+                placeholder="Введите email"
+                required
+              />
+            </div>
+
+            <div v-if="editMessage" :class="['message', editMessageType]">
+              {{ editMessage }}
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeEditModal">
+                Отмена
+              </button>
+              <button type="submit" class="btn-primary" :disabled="editLoading">
+                {{ editLoading ? 'Сохранение...' : 'Сохранить' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Модалка смены пароля -->
+      <div v-if="showPasswordModal" class="modal-overlay" @click.self="closePasswordModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Изменить пароль</h2>
+            <button class="modal-close" @click="closePasswordModal">✕</button>
+          </div>
+
+          <form @submit.prevent="handleChangePassword">
+            <div class="form-group">
+              <label for="old-password">Текущий пароль</label>
+              <input
+                id="old-password"
+                v-model="passwordForm.oldPassword"
+                type="password"
+                placeholder="Введите текущий пароль"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-password">Новый пароль</label>
+              <input
+                id="new-password"
+                v-model="passwordForm.newPassword"
+                type="password"
+                placeholder="Минимум 6 символов"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Подтвердите пароль</label>
+              <input
+                id="confirm-password"
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                placeholder="Повторите новый пароль"
+                required
+              />
+            </div>
+
+            <div v-if="passwordMessage" :class="['message', passwordMessageType]">
+              {{ passwordMessage }}
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closePasswordModal">
+                Отмена
+              </button>
+              <button type="submit" class="btn-primary" :disabled="passwordLoading">
+                {{ passwordLoading ? 'Изменение...' : 'Изменить пароль' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </DashboardLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '../services/auth.js'
+import user from '../services/me.js'
 
 const authStore = useAuthStore()
 
+// Модалка редактирования
+const showEditModal = ref(false)
+const editForm = ref({
+  name: '',
+  surname: '',
+  email: ''
+})
+const editLoading = ref(false)
+const editMessage = ref('')
+const editMessageType = ref('')
+
+// Модалка смены пароля
+const showPasswordModal = ref(false)
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordLoading = ref(false)
+const passwordMessage = ref('')
+const passwordMessageType = ref('')
+
 const registrationDate = computed(() => {
-  return new Date().toLocaleDateString('ru-RU', {
+  if (!authStore.user?.created_at) {
+    return '—'
+  }
+  const date = new Date(authStore.user.created_at * 1000)
+  return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   })
 })
+
+// Загрузка профиля при монтировании
+onMounted(async () => {
+  try {
+    const result = await user.getProfile()
+    if (result.success) {
+      authStore.user = result.user
+    }
+  } catch (error) {
+    console.error('Failed to load profile:', error)
+  }
+})
+
+// Открыть модалку редактирования
+const openEditModal = () => {
+  editForm.value = {
+    name: authStore.user?.name || '',
+    surname: authStore.user?.surname || '',
+    email: authStore.user?.email || ''
+  }
+  editMessage.value = ''
+  showEditModal.value = true
+}
+
+// Закрыть модалку редактирования
+const closeEditModal = () => {
+  showEditModal.value = false
+  editMessage.value = ''
+}
+
+// Обновить профиль
+const handleUpdateProfile = async () => {
+  editLoading.value = true
+  editMessage.value = ''
+
+  try {
+    const result = await user.updateProfile(
+      editForm.value.name,
+      editForm.value.surname,
+      editForm.value.email
+    )
+
+    if (result.success) {
+      authStore.user = result.user
+      editMessage.value = 'Профиль успешно обновлён'
+      editMessageType.value = 'success'
+
+      setTimeout(() => {
+        closeEditModal()
+      }, 1500)
+    } else {
+      editMessage.value = result.message || 'Ошибка обновления профиля'
+      editMessageType.value = 'error'
+    }
+  } catch (error) {
+    editMessage.value = 'Ошибка подключения к серверу'
+    editMessageType.value = 'error'
+  } finally {
+    editLoading.value = false
+  }
+}
+
+// Открыть модалку смены пароля
+const openPasswordModal = () => {
+  passwordForm.value = {
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  }
+  passwordMessage.value = ''
+  showPasswordModal.value = true
+}
+
+// Закрыть модалку смены пароля
+const closePasswordModal = () => {
+  showPasswordModal.value = false
+  passwordMessage.value = ''
+}
+
+// Изменить пароль
+const handleChangePassword = async () => {
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    passwordMessage.value = 'Пароли не совпадают'
+    passwordMessageType.value = 'error'
+    return
+  }
+
+  passwordLoading.value = true
+  passwordMessage.value = ''
+
+  try {
+    const result = await user.changePassword(
+      passwordForm.value.oldPassword,
+      passwordForm.value.newPassword
+    )
+
+    if (result.success) {
+      passwordMessage.value = 'Пароль успешно изменён'
+      passwordMessageType.value = 'success'
+
+      setTimeout(() => {
+        closePasswordModal()
+      }, 1500)
+    } else {
+      passwordMessage.value = result.message || 'Ошибка смены пароля'
+      passwordMessageType.value = 'error'
+    }
+  } catch (error) {
+    passwordMessage.value = 'Ошибка подключения к серверу'
+    passwordMessageType.value = 'error'
+  } finally {
+    passwordLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
+/* Предыдущие стили + добавляем новые */
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1a202c;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: #2d3748;
+  background: #f5f5f7;
+}
+
+/* Модалка */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f5f5f7;
+  color: #1a1a1a;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d1d6;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2d3748;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(45, 55, 72, 0.1);
+}
+
+.message {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.message.success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.message.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Остальные стили остаются без изменений */
 .profile {
   max-width: 1200px;
   margin: 0 auto;
@@ -222,18 +661,6 @@ h1 {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: not-allowed;
-  color: #999;
-  transition: all 0.2s ease;
 }
 
 .settings-card h2 {
@@ -349,6 +776,11 @@ h1 {
 
   .info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal {
+    width: 95%;
+    padding: 1.5rem;
   }
 }
 </style>

@@ -37,7 +37,7 @@
 <script setup>
 import { computed } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '../services/auth.js'
 
 const authStore = useAuthStore()
 
