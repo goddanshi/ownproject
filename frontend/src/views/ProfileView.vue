@@ -28,12 +28,22 @@
 
               <div class="info-item">
                 <label>Имя</label>
-                <div class="info-value">{{ authStore.user?.name || '—' }} <component :is="EditIcon" /></div>
+                <div class="info-value-with-edit">
+                  <span class="info-value">{{ authStore.user?.name || '—' }}</span>
+                  <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
+                    <EditIcon />
+                  </button>
+                </div>
               </div>
 
               <div class="info-item">
                 <label>Фамилия</label>
-                <div class="info-value">{{ authStore.user?.surname || '—' }} <component :is="EditIcon" /></div>
+                <div class="info-value-with-edit">
+                  <span class="info-value">{{ authStore.user?.surname || '—' }}</span>
+                  <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
+                    <EditIcon />
+                  </button>
+                </div>
               </div>
 
               <div class="info-item">
@@ -215,7 +225,7 @@ import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../services/auth.js'
 import user from '../services/me.js'
-import EditIcon from '@/components/icons/EditPencil.vue.vue'
+import EditIcon from '@/components/icons/EditPencil.vue'
 
 const authStore = useAuthStore()
 
