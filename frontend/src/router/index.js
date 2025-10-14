@@ -56,7 +56,7 @@ const router = createRouter({
   ]
 })
 
-// Navigation guard с лоадером
+// Navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
@@ -75,11 +75,12 @@ router.beforeEach(async (to, from, next) => {
   if (requiresAuth && !isAuthenticated) {
     next('/login')
   }
-  // Гостевой роут (login/register) + авторизован → на dashboard
+    // Гостевой роут (login/register) + авторизован → на dashboard
+  // ТОЛЬКО если пользователь явно пытается зайти на /login или /register
   else if (isGuestRoute && isAuthenticated) {
     next('/dashboard')
   }
-  // Всё ок
+  // Всё остальное - пропускаем без редиректа
   else {
     next()
   }
