@@ -1,4 +1,4 @@
-GET http://81.19.136.133:8000/user/profile
+GET http://81.19.136.133:8000/user/profiles
 Content-Type: application/json
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJvd25wcm9qZWN0IiwiaWF0IjoxNzYwNDU5MzMzLCJleHAiOjE3NjEwNjQxMzMsInVzZXJJZCI6MiwidXNlcm5hbWUiOiJnb2RkYW5zaGkiLCJlbWFpbCI6Im9jZWFuZmx1ZGR5QGdtYWlsLmNvbSJ9.UlkU4w9_OFL4FZvw18TZOWwdxLI2c4vjpoIAe78VzhI
 ###

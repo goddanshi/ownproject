@@ -218,4 +218,49 @@ class UserController extends Controller
             ]
         ];
     }
+
+    public function actionProfiles()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        // Проверяем JWT токен
+        $authHeader = Yii::$app->request->headers->get('Authorization');
+
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $token = $matches[1];
+        $payload = JwtHelper::validateToken($token);
+
+        if (!$payload) {
+            return ['success' => false, 'message' => 'Invalid token'];
+        }
+
+        // Получаем всех пользователей
+        $users = User::find()
+            ->where(['status' => User::STATUS_ACTIVE])
+            ->all();
+
+        if (empty($users)) {
+            return ['success' => false, 'message' => 'No users found'];
+        }
+
+        // Формируем массив пользователей
+        $usersData = [];
+        foreach ($users as $user) {
+            $usersData[] = [
+                'name' => $user->name,
+                'surname' => $user->surname,
+                'email' => $user->email,
+                'role' => $user->role,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'users' => $usersData,
+            'total' => count($usersData)
+        ];
+    }
 }
