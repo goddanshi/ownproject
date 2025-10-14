@@ -1,5 +1,4 @@
 <template>
-  <DashboardLayout>
   <div class="sidebar-wrapper">
     <div v-if="isMobileOpen" class="overlay" @click="closeMobile"></div>
 
@@ -45,14 +44,13 @@
       </button>
     </aside>
   </div>
-  </DashboardLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
-import DashboardLayout from '../layouts/DashboardLayout.vue'
+
 
 import EmploersIcon from '@/components/icons/Emploers.vue'
 import DashboardIcon from '@/components/icons/Dashboard.vue'
