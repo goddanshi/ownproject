@@ -49,7 +49,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../services/auth.js'
+import { useAuthStore } from '../stores/auth.js'
 
 import EmploersIcon from '@/components/icons/Emploers.vue'
 import DashboardIcon from '@/components/icons/Dashboard.vue'
