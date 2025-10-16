@@ -111,22 +111,31 @@ class ApiController extends Controller
         $authHeader = Yii::$app->request->headers->get('Authorization');
 
         if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return ['success' => false, 'message' => 'Token not provided'];
+            return ['success' => false, 'message' => 'No token provided'];
         }
 
         $token = $matches[1];
         $payload = JwtHelper::validateToken($token);
 
         if (!$payload) {
-            return ['success' => false, 'message' => 'Invalid or expired token'];
+            return ['success' => false, 'message' => 'Invalid token'];
+        }
+
+        $user = User::findOne(['id' => $payload['user_id']]);
+
+        if (!$user) {
+            return ['success' => false, 'message' => 'User not found'];
         }
 
         return [
             'success' => true,
             'user' => [
-                'id' => $payload['userId'],
-                'username' => $payload['username'],
-                'email' => $payload['email'],
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'name' => $user->name,
+                'surname' => $user->surname,
             ]
         ];
     }
