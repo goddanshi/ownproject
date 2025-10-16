@@ -9,6 +9,12 @@ export const useAuthStore = defineStore('auth', {
     checked: false
   }),
 
+  // ← ДОБАВЬ PERSIST
+  persist: {
+    storage: localStorage,
+    paths: ['user', 'isAuthenticated', 'checked']
+  },
+
   actions: {
     async checkAuth() {
       if (this.checked) return
@@ -28,7 +34,6 @@ export const useAuthStore = defineStore('auth', {
           this.user = result.user
           this.isAuthenticated = true
 
-          // Загружаем права пользователя (без блокировки если не получится)
           try {
             await this.loadUserPermissions()
           } catch (error) {
@@ -54,7 +59,6 @@ export const useAuthStore = defineStore('auth', {
       if (!this.user) return
 
       try {
-        // Динамический импорт чтобы избежать циклической зависимости
         const { default: settingsApi } = await import('@/services/settings')
         const result = await settingsApi.getRolePermissions(this.user.role)
 
