@@ -1,8 +1,9 @@
 <?php
+namespace console\migrations;
 
 use yii\db\Migration;
 
-class m241014_create_role_permissions_table extends Migration
+class m241014_000000_create_role_permissions_table extends Migration
 {
     public function safeUp()
     {
