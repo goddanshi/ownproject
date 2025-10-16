@@ -47,56 +47,62 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth.js'
-
-
-import EmploersIcon from '@/components/icons/Emploers.vue'
-import DashboardIcon from '@/components/icons/Dashboard.vue'
-import TasksIcon from '@/components/icons/Tasks.vue'
-import RequestIcon from '@/components/icons/Request.vue'
-import LogoutIcon from '@/components/icons/Logout.vue'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { usePermissions } from '../composables/usePermissions'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+const { can } = usePermissions()
 
-// Загружаем состояние из localStorage при инициализации
-const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
-const isMobileOpen = ref(false)
-
-const menuItems = [
-  { path: '/dashboard', label: 'Дашборд', icon: DashboardIcon },
-  { path: '/workers', label: 'Работники', icon: EmploersIcon },
-  { path: '/tasks', label: 'Задачи', icon: TasksIcon },
-  { path: '/requests', label: 'Заявки', icon: RequestIcon },
-]
+const collapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 
 const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value
+  collapsed.value = !collapsed.value
+  localStorage.setItem('sidebar-collapsed', collapsed.value)
 }
 
-const closeMobile = () => {
-  isMobileOpen.value = false
+const menuItems = computed(() => [
+  {
+    name: 'dashboard',
+    path: '/dashboard',
+    label: 'Дашборд',
+    icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+    permission: 'view_dashboard'
+  },
+  {
+    name: 'workers',
+    path: '/workers',
+    label: 'Работники',
+    icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+    permission: 'view_workers'
+  },
+  {
+    name: 'tasks',
+    path: '/tasks',
+    label: 'Задачи',
+    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    permission: 'view_tasks'
+  },
+  {
+    name: 'requests',
+    path: '/requests',
+    label: 'Заявки',
+    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    permission: 'view_requests'
+  }
+].filter(item => can(item.permission)))
+
+const isActive = (path) => {
+  return route.path === path
 }
 
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
-
-// Сохраняем состояние в localStorage при изменении
-watch(isCollapsed, (newValue) => {
-  localStorage.setItem('sidebar-collapsed', newValue.toString())
-})
-
-// При монтировании проверяем localStorage
-onMounted(() => {
-  const savedState = localStorage.getItem('sidebar-collapsed')
-  if (savedState !== null) {
-    isCollapsed.value = savedState === 'true'
-  }
-})
 </script>
 
 <style scoped>

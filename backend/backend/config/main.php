@@ -38,6 +38,7 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                // --------------------------------
                 'POST api/register' => 'api/register',
                 'POST api/login' => 'api/login',
                 'GET api/check' => 'api/check',
@@ -50,6 +51,12 @@ return [
                 'GET user/profiles' => 'user/profiles',
                 'POST user/update-profile' => 'user/update-profile',
                 'POST user/change-password' => 'user/change-password',
+
+                // --------------------------------
+                // Settings routes
+                'GET settings/permissions' => 'settings/get-permissions',
+                'GET settings/role-permissions' => 'settings/get-role-permissions',
+                'POST settings/update-role-permissions' => 'settings/update-role-permissions'
             ],
         ],
         'request' => [

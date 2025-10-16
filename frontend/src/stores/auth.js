@@ -27,6 +27,9 @@ export const useAuthStore = defineStore('auth', {
         if (result.success) {
           this.user = result.user
           this.isAuthenticated = true
+
+          // Загружаем права пользователя
+          await this.loadUserPermissions()
         } else {
           this.user = null
           this.isAuthenticated = false
@@ -42,12 +45,27 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async loadUserPermissions() {
+      try {
+        const settingsApi = (await import('@/services/settings')).default
+        const result = await settingsApi.getRolePermissions(this.user.role)
+
+        if (result.success) {
+          this.user.permissions = result.permissions
+        }
+      } catch (error) {
+        console.error('Failed to load permissions:', error)
+        this.user.permissions = []
+      }
+    },
+
     async login(username, password) {
       const result = await authApi.login(username, password)
       if (result.success) {
         this.user = result.user
         this.isAuthenticated = true
         this.checked = true
+        await this.loadUserPermissions()
       }
       return result
     },
@@ -58,6 +76,7 @@ export const useAuthStore = defineStore('auth', {
         this.user = result.user
         this.isAuthenticated = true
         this.checked = true
+        await this.loadUserPermissions()
       }
       return result
     },
