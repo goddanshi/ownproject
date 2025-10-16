@@ -164,7 +164,6 @@ const loadProfiles = async () => {
   loading.value = true
   try {
     const result = await usersApi.getProfiles()
-    console.log('Profiles loaded:', result)
 
     if (result.success) {
       // Проверка что users существует и это массив
