@@ -28,8 +28,13 @@ export const useAuthStore = defineStore('auth', {
           this.user = result.user
           this.isAuthenticated = true
 
-          // Загружаем права пользователя
-          await this.loadUserPermissions()
+          // Загружаем права пользователя (без блокировки если не получится)
+          try {
+            await this.loadUserPermissions()
+          } catch (error) {
+            console.warn('Failed to load permissions, continuing without them')
+            this.user.permissions = []
+          }
         } else {
           this.user = null
           this.isAuthenticated = false
@@ -46,12 +51,17 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async loadUserPermissions() {
+      if (!this.user) return
+
       try {
-        const settingsApi = (await import('@/services/settings')).default
+        // Динамический импорт чтобы избежать циклической зависимости
+        const { default: settingsApi } = await import('@/services/settings')
         const result = await settingsApi.getRolePermissions(this.user.role)
 
         if (result.success) {
-          this.user.permissions = result.permissions
+          this.user.permissions = result.permissions || []
+        } else {
+          this.user.permissions = []
         }
       } catch (error) {
         console.error('Failed to load permissions:', error)
@@ -65,7 +75,12 @@ export const useAuthStore = defineStore('auth', {
         this.user = result.user
         this.isAuthenticated = true
         this.checked = true
-        await this.loadUserPermissions()
+
+        try {
+          await this.loadUserPermissions()
+        } catch (error) {
+          this.user.permissions = []
+        }
       }
       return result
     },
@@ -76,7 +91,12 @@ export const useAuthStore = defineStore('auth', {
         this.user = result.user
         this.isAuthenticated = true
         this.checked = true
-        await this.loadUserPermissions()
+
+        try {
+          await this.loadUserPermissions()
+        } catch (error) {
+          this.user.permissions = []
+        }
       }
       return result
     },

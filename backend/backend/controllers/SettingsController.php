@@ -13,20 +13,28 @@ use app\models\RolePermission;
 
 class SettingsController extends Controller
 {
+
+    public function actionOptions()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return ['success' => true];
+    }
     public function behaviors()
     {
-        return [
-            'corsFilter' => [
-                'class' => Cors::class,
-                'cors' => [
-                    'Origin' => ['http://localhost:5173', 'http://81.19.136.133:5173', 'http://81.19.136.133'],
-                    'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-                    'Access-Control-Request-Headers' => ['*'],
-                    'Access-Control-Allow-Credentials' => true,
-                    'Access-Control-Max-Age' => 86400,
-                ],
+        $behaviors = parent::behaviors();
+
+        $behaviors['corsFilter'] = [
+            'class' => Cors::class,
+            'cors' => [
+                'Origin' => ['http://localhost:5173', 'http://81.19.136.133:5173', 'http://81.19.136.133'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+                'Access-Control-Max-Age' => 86400,
             ],
         ];
+
+        return $behaviors;
     }
 
     public function beforeAction($action)
