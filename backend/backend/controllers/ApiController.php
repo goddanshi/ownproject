@@ -51,7 +51,7 @@ class ApiController extends Controller
 
         if ($user->save()) {
             // Генерируем JWT токен
-            $token = JwtHelper::generateToken($user->id, $user->username, $user->email);
+            $token = JwtHelper::generateToken($user->id, $user->username, $user->email, $user->role);
 
             return [
                 'success' => true,
@@ -61,6 +61,7 @@ class ApiController extends Controller
                     'id' => $user->id,
                     'username' => $user->username,
                     'email' => $user->email,
+                    'role' => $user->role,
                 ]
             ];
         }
@@ -83,7 +84,7 @@ class ApiController extends Controller
 
         if ($user && $user->validatePassword($data['password'] ?? '')) {
             // Генерируем JWT токен
-            $token = JwtHelper::generateToken($user->id, $user->username, $user->email);
+            $token = JwtHelper::generateToken($user->id, $user->username, $user->email, $user->role);
 
             return [
                 'success' => true,
@@ -93,6 +94,7 @@ class ApiController extends Controller
                     'id' => $user->id,
                     'username' => $user->username,
                     'email' => $user->email,
+                    'role' => $user->role,
                 ]
             ];
         }
@@ -121,22 +123,13 @@ class ApiController extends Controller
             return ['success' => false, 'message' => 'Invalid or expired token'];
         }
 
-        // Получаем пользователя из БД чтобы иметь актуальные данные включая role
-        $user = User::findOne(['id' => $payload['user_id']]);
-
-        if (!$user) {
-            return ['success' => false, 'message' => 'User not found'];
-        }
-
         return [
             'success' => true,
             'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->role,
-                'name' => $user->name,
-                'surname' => $user->surname,
+                'id' => $payload['userId'],
+                'username' => $payload['username'],
+                'email' => $payload['email'],
+                'role' => $payload['role'],
             ]
         ];
     }

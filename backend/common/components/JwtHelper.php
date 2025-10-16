@@ -9,7 +9,7 @@ class JwtHelper
     private static $secret = 'your-super-secret-key-change-me-in-production'; // Измени на случайную строку!
     private static $algorithm = 'HS256';
 
-    public static function generateToken($userId, $username, $email)
+    public static function generateToken($userId, $username, $email, $role)
     {
         $payload = [
             'iss' => 'ownproject',
@@ -18,6 +18,7 @@ class JwtHelper
             'userId' => $userId,
             'username' => $username,
             'email' => $email,
+            'role' => $role,
         ];
 
         return JWT::encode($payload, self::$secret, self::$algorithm);
