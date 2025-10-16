@@ -13,16 +13,11 @@ use app\models\RolePermission;
 
 class SettingsController extends Controller
 {
-
-    public function actionOptions()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        return ['success' => true];
-    }
     public function behaviors()
     {
         $behaviors = parent::behaviors();
 
+        // ВАЖНО: CORS должен быть ПЕРВЫМ
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
             'cors' => [
@@ -31,6 +26,7 @@ class SettingsController extends Controller
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
                 'Access-Control-Max-Age' => 86400,
+                'Access-Control-Expose-Headers' => ['*'],
             ],
         ];
 
@@ -41,6 +37,12 @@ class SettingsController extends Controller
     {
         $this->enableCsrfValidation = false;
         return parent::beforeAction($action);
+    }
+
+    public function actionOptions()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return ['success' => true];
     }
 
     /**
@@ -123,7 +125,7 @@ class SettingsController extends Controller
         }
 
         $user = User::findOne(['id' => $payload['user_id']]);
-        if (!$user || $user->role != User::ROLE_ADMIN) {
+        if (!$user) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 

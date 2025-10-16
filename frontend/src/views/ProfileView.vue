@@ -274,7 +274,7 @@ const loadProfile = async () => {
   loading.value = true
   try {
     const result = await userApi.getProfile()
-    console.log('Profile loaded:', result)
+
 
     if (result.success) {
       profileData.value = result.user

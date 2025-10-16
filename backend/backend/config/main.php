@@ -56,7 +56,8 @@ return [
                 // Settings routes
                 'GET settings/permissions' => 'settings/get-permissions',
                 'GET settings/role-permissions' => 'settings/get-role-permissions',
-                'POST settings/update-role-permissions' => 'settings/update-role-permissions'
+                'POST settings/update-role-permissions' => 'settings/update-role-permissions',
+                'OPTIONS settings/<action:\w+>' => 'settings/options',
             ],
         ],
         'request' => [
