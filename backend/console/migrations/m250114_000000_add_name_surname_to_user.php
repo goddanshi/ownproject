@@ -1,5 +1,5 @@
 <?php
-
+namespace console\migrations;
 use yii\db\Migration;
 
 class m250114_000000_add_name_surname_to_user extends Migration
