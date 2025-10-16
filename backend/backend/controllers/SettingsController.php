@@ -63,7 +63,8 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        $user = User::findOne(['id' => $payload['user_id']]);
+        // ИСПРАВЛЕНО: используй userId вместо user_id
+        $user = User::findOne(['id' => $payload['userId']]);
         if (!$user) {
             return ['success' => false, 'message' => 'Access denied'];
         }
@@ -95,7 +96,8 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        $user = User::findOne(['id' => $payload['user_id']]);
+        // ИСПРАВЛЕНО: используй userId вместо user_id
+        $user = User::findOne(['id' => $payload['userId']]);
         if (!$user || $user->role != User::ROLE_ADMIN) {
             return ['success' => false, 'message' => 'Access denied'];
         }
@@ -145,7 +147,8 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        $user = User::findOne(['id' => $payload['user_id']]);
+        // ИСПРАВЛЕНО: используй userId вместо user_id
+        $user = User::findOne(['id' => $payload['userId']]);
         if (!$user || $user->role != User::ROLE_ADMIN) {
             return ['success' => false, 'message' => 'Access denied'];
         }
