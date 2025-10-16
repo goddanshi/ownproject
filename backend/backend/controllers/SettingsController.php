@@ -8,9 +8,8 @@ use yii\filters\Cors;
 use yii\web\Response;
 use common\components\JwtHelper;
 use common\models\User;
-use app\models\Permission;
-use app\models\RolePermission;
-
+use common\models\Permission;
+use common\models\RolePermission;
 class SettingsController extends Controller
 {
     public function behaviors()
