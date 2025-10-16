@@ -54,10 +54,12 @@ return [
 
                 // --------------------------------
                 // Settings routes
+                'OPTIONS settings/role-permissions' => 'settings/options',  // ← ДОБАВЬ КОНКРЕТНЫЙ
+                'OPTIONS settings/permissions' => 'settings/options',        // ← ДОБАВЬ КОНКРЕТНЫЙ
+                'OPTIONS settings/update-role-permissions' => 'settings/options', // ← ДОБАВЬ КОНКРЕТНЫЙ
                 'GET settings/permissions' => 'settings/get-permissions',
                 'GET settings/role-permissions' => 'settings/get-role-permissions',
                 'POST settings/update-role-permissions' => 'settings/update-role-permissions',
-                'OPTIONS settings/<action:\w+>' => 'settings/options',
             ],
         ],
         'request' => [
