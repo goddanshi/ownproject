@@ -19,7 +19,7 @@ class ApiController extends Controller
             'class' => \yii\filters\Cors::class,
             'cors' => [
                 'Origin' => [
-                    'http://81.19.136.133',
+                    'http://185.213.240.236',
                     'http://localhost:5173',
                     'http://127.0.0.1:5173'
                 ],
