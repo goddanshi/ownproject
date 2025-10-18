@@ -7,7 +7,6 @@
         {{ isCollapsed ? '>>' : '<<' }}
       </button>
 
-      <!-- Логотип или название системы -->
       <div class="sidebar-logo">
         <transition name="fade">
           <span v-if="!isCollapsed" class="logo-text">CRM System</span>
@@ -15,10 +14,10 @@
         </transition>
       </div>
 
-      <!-- Навигация -->
+      <!-- Навигация - отфильтрованная по правам -->
       <nav class="nav-menu">
         <RouterLink
-          v-for="item in menuItems"
+          v-for="item in visibleMenuItems"
           :key="item.path"
           :to="item.path"
           class="nav-item"
@@ -33,7 +32,6 @@
         </RouterLink>
       </nav>
 
-      <!-- Кнопка выхода -->
       <button class="logout-btn" @click="handleLogout">
         <span class="icon">
           <LogoutIcon />
@@ -47,10 +45,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
-
 
 import EmploersIcon from '@/components/icons/Emploers.vue'
 import DashboardIcon from '@/components/icons/Dashboard.vue'
@@ -61,16 +58,47 @@ import LogoutIcon from '@/components/icons/Logout.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Загружаем состояние из localStorage при инициализации
 const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 const isMobileOpen = ref(false)
 
+// Все пункты меню с правами
 const menuItems = [
-  { path: '/dashboard', label: 'Дашборд', icon: DashboardIcon },
-  { path: '/workers', label: 'Работники', icon: EmploersIcon },
-  { path: '/tasks', label: 'Задачи', icon: TasksIcon },
-  { path: '/requests', label: 'Заявки', icon: RequestIcon },
+  {
+    path: '/dashboard',
+    label: 'Дашборд',
+    icon: DashboardIcon,
+    permission: 'view_dashboard'  // ← Добавили права
+  },
+  {
+    path: '/workers',
+    label: 'Работники',
+    icon: EmploersIcon,
+    permission: 'view_workers'  // ← Добавили права
+  },
+  {
+    path: '/tasks',
+    label: 'Задачи',
+    icon: TasksIcon,
+    permission: 'view_tasks'  // ← Добавили права
+  },
+  {
+    path: '/requests',
+    label: 'Заявки',
+    icon: RequestIcon,
+    permission: 'view_requests'  // ← Добавили права
+  },
 ]
+
+// Фильтруем меню по правам - computed автоматически пересчитается
+const visibleMenuItems = computed(() => {
+  return menuItems.filter(item => {
+    // Если нет требования прав - показываем всем
+    if (!item.permission) return true
+
+    // Проверяем права через authStore.can()
+    return authStore.can(item.permission)
+  })
+})
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -85,12 +113,10 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-// Сохраняем состояние в localStorage при изменении
 watch(isCollapsed, (newValue) => {
   localStorage.setItem('sidebar-collapsed', newValue.toString())
 })
 
-// При монтировании проверяем localStorage
 onMounted(() => {
   const savedState = localStorage.getItem('sidebar-collapsed')
   if (savedState !== null) {

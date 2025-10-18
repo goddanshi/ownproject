@@ -15,6 +15,18 @@ export const useAuthStore = defineStore('auth', {
     paths: ['user', 'isAuthenticated', 'checked']
   },
 
+  getters: {
+    // Простой геттер для проверки прав
+    can: (state) => (permission) => {
+      if (!state.user || !state.user.permissions) return false
+      return state.user.permissions.includes(permission)
+    },
+
+    isAdmin: (state) => state.user?.role === 1,
+    isTeamlead: (state) => state.user?.role === 2,
+    isEmployee: (state) => state.user?.role === 3,
+  },
+
   actions: {
     async checkAuth() {
       if (this.checked) return
