@@ -72,5 +72,5 @@ jobs:
             sudo chown -R deploy:www-data /var/www
             sudo chmod -R 777 backend/runtime backend/web/assets frontend/runtime frontend/web/assets console/runtime
             php yii cache/flush-all
-            sudo systemctl restart php8.3-fpm
+            sudo systemctl restart php8.4-fpm
             echo "✅ Done!"
