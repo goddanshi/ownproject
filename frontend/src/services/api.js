@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.DEV
   ? 'http://localhost:8000'
-  : 'http://81.19.136.133:8000'
+  : 'http://185.213.240.236:8000'
 
 const api = axios.create({
   baseURL: API_URL,
