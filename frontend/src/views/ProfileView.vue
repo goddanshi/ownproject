@@ -5,7 +5,7 @@
     </template>
     <div class="profile">
       <div class="profile-header">
-        <h1>Профиль пользователя</h1>
+        <h1>Профиль пользователя new vps</h1>
         <p class="subtitle">Управление личными данными</p>
       </div>
 
