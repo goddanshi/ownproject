@@ -33,7 +33,7 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, permission: 'view_profile' }
     },
     {
       path: '/workers',
@@ -57,6 +57,7 @@ const router = createRouter({
 })
 
 // Navigation guard
+// Navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
@@ -70,17 +71,23 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = authStore.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
   const isGuestRoute = to.meta.guest
+  const requiredPermission = to.meta.permission
 
   // Защищённый роут + не авторизован → на логин
   if (requiresAuth && !isAuthenticated) {
     next('/login')
   }
-    // Гостевой роут (login/register) + авторизован → на dashboard
-  // ТОЛЬКО если пользователь явно пытается зайти на /login или /register
+  // Гостевой роут (login/register) + авторизован → на dashboard
   else if (isGuestRoute && isAuthenticated) {
     next('/dashboard')
   }
-  // Всё остальное - пропускаем без редиректа
+  // Проверка прав доступа
+  else if (requiredPermission && !authStore.can(requiredPermission)) {
+    // Нет прав → редирект на dashboard с сообщением (опционально)
+    console.warn(`Access denied: missing permission "${requiredPermission}"`)
+    next('/dashboard')
+  }
+  // Всё остальное - пропускаем
   else {
     next()
   }

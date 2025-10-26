@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import GlobalLoader from './components/GlobalLoader.vue'
@@ -30,8 +30,26 @@ const showHeader = computed(() => {
   return !['/login', '/register'].includes(route.path)
 })
 
-// ВСЁ! Никаких onMounted и watch!
-// Роутер сам всё сделает через beforeEach
+let permissionCheckInterval = null
+
+onMounted(() => {
+  // Первая проверка прав сразу после монтирования
+  if (authStore.isAuthenticated && authStore.user) {
+    authStore.refreshPermissions()
+  }
+
+  // Запускаем периодическую проверку прав каждые 30 секунд
+  permissionCheckInterval = setInterval(() => {
+    authStore.refreshPermissions()
+  }, 30000) // 30 секунд
+})
+
+onUnmounted(() => {
+  // Очищаем интервал при размонтировании компонента
+  if (permissionCheckInterval) {
+    clearInterval(permissionCheckInterval)
+  }
+})
 </script>
 
 <style scoped>

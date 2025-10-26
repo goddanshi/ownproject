@@ -16,7 +16,7 @@
           <label>Выберите роль:</label>
           <div class="role-tabs">
             <button
-              v-for="role in roles"
+              v-for="role in availableRoles"
               :key="role.id"
               :class="['role-tab', { active: selectedRole === role.id }]"
               @click="selectRole(role.id)"
@@ -81,14 +81,24 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import settingsApi from '@/services/settings'
+import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['close'])
+const authStore = useAuthStore()
 
 const roles = [
   { id: 1, label: 'Администратор' },
   { id: 2, label: 'Тимлид' },
   { id: 3, label: 'Сотрудник' }
 ]
+
+// Фильтруем роли: тимлид не видит вкладку "Администратор и тимлид"
+const availableRoles = computed(() => {
+  if (authStore.isTeamlead) {
+    return roles.filter(role => role.id !== 1 && role.id !== 2) // Исключаем админа и тимлида
+  }
+  return roles
+})
 
 const categoryLabels = {
   dashboard: 'Панель управления',
@@ -97,10 +107,12 @@ const categoryLabels = {
   requests: 'Заявки',
   profile: 'Профиль',
   admin: 'Администрирование',
-  other: 'Прочее'
+  other: 'Прочее',
+  teams: 'Команды',
 }
 
-const selectedRole = ref(1)
+// Начальная роль: тимлид начинает с роли "Тимлид" (id: 2), админ - с "Администратор" (id: 1)
+const selectedRole = ref(authStore.isTeamlead ? 3 : 1)
 const loading = ref(true)
 const saving = ref(false)
 const allPermissions = ref({})
@@ -166,12 +178,12 @@ const savePermissions = async () => {
     )
 
     if (result.success) {
-      message.value = 'Права успешно сохранены!'
+      message.value = 'Права успешно сохранены! Изменения применятся автоматически в течение 30 секунд.'
       messageType.value = 'success'
 
       setTimeout(() => {
         emit('close')
-      }, 1500)
+      }, 2000)
     } else {
       message.value = result.message || 'Ошибка сохранения прав'
       messageType.value = 'error'

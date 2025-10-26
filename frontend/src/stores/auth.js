@@ -6,17 +6,18 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     isAuthenticated: false,
     loading: false,
-    checked: false
+    checked: false,
+    permissionsLoading: false
   }),
 
-  // ← ДОБАВЬ PERSIST
   persist: {
     storage: localStorage,
-    paths: ['user', 'isAuthenticated', 'checked']
+    paths: ['isAuthenticated', 'checked'],
+    // Исключаем user из persist, чтобы permissions не сохранялись в localStorage
+    // Базовые данные пользователя будем получать из checkAuth
   },
 
   getters: {
-    // Простой геттер для проверки прав
     can: (state) => (permission) => {
       if (!state.user || !state.user.permissions) return false
       return state.user.permissions.includes(permission)
@@ -25,17 +26,23 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.role === 1,
     isTeamlead: (state) => state.user?.role === 2,
     isEmployee: (state) => state.user?.role === 3,
+
+
   },
 
   actions: {
     async checkAuth() {
-      if (this.checked) return
-
       const token = localStorage.getItem('jwt_token')
       if (!token) {
         this.user = null
         this.isAuthenticated = false
         this.checked = true
+        return
+      }
+
+      // Если уже checked и есть user, просто обновим права
+      if (this.checked && this.user) {
+        await this.loadUserPermissions()
         return
       }
 
@@ -64,6 +71,23 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.loading = false
         this.checked = true
+      }
+    },
+
+    // Новый метод для периодической проверки прав
+    async refreshPermissions() {
+      if (!this.isAuthenticated || !this.user) return
+
+      // Не запускаем если уже идет загрузка
+      if (this.permissionsLoading) return
+
+      this.permissionsLoading = true
+      try {
+        await this.loadUserPermissions()
+      } catch (error) {
+        console.error('Failed to refresh permissions:', error)
+      } finally {
+        this.permissionsLoading = false
       }
     },
 

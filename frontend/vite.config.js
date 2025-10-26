@@ -12,8 +12,11 @@ export default defineConfig({
   },
   base: '/', // Это важно!
   server: {
+    host: '0.0.0.0',  // ← Для Docker
     port: 5173,
-    host: true
+    watch: {
+      usePolling: true  // ← Для Windows + Docker
+    }
   },
   build: {
     outDir: 'dist',

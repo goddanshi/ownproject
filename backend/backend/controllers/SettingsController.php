@@ -63,10 +63,14 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        // ИСПРАВЛЕНО: используй userId вместо user_id
         $user = User::findOne(['id' => $payload['userId']]);
         if (!$user) {
             return ['success' => false, 'message' => 'Access denied'];
+        }
+
+        // Тимлид не может просматривать права админа
+        if ($user->role == User::ROLE_TEAMLEAD && $role == User::ROLE_ADMIN) {
+            return ['success' => false, 'message' => 'Access denied: cannot view admin permissions'];
         }
 
         $rolePermissions = RolePermission::find()
@@ -96,9 +100,8 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        // ИСПРАВЛЕНО: используй userId вместо user_id
         $user = User::findOne(['id' => $payload['userId']]);
-        if (!$user || $user->role != User::ROLE_ADMIN) {
+        if (!$user) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 
@@ -147,10 +150,14 @@ class SettingsController extends Controller
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        // ИСПРАВЛЕНО: используй userId вместо user_id
         $user = User::findOne(['id' => $payload['userId']]);
-        if (!$user || $user->role != User::ROLE_ADMIN) {
+        if (!$user) {
             return ['success' => false, 'message' => 'Access denied'];
+        }
+
+        // Тимлид не может редактировать права админа
+        if ($user->role == User::ROLE_TEAMLEAD && $role == User::ROLE_ADMIN) {
+            return ['success' => false, 'message' => 'Access denied: cannot edit admin permissions'];
         }
 
         $transaction = Yii::$app->db->beginTransaction();

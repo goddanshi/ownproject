@@ -54,6 +54,7 @@ import DashboardIcon from '@/components/icons/Dashboard.vue'
 import TasksIcon from '@/components/icons/Tasks.vue'
 import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
+import ComandsIcon from "@/components/icons/Comands.vue";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -73,19 +74,25 @@ const menuItems = [
     path: '/workers',
     label: 'Работники',
     icon: EmploersIcon,
-    permission: 'view_workers'  // ← Добавили права
+    permission: 'view_workers'
+  },
+  {
+    path: '/commands',
+    label: 'Команды',
+    icon: ComandsIcon,
+    permission: 'view_teams'
   },
   {
     path: '/tasks',
     label: 'Задачи',
     icon: TasksIcon,
-    permission: 'view_tasks'  // ← Добавили права
+    permission: 'view_tasks'
   },
   {
     path: '/requests',
     label: 'Заявки',
     icon: RequestIcon,
-    permission: 'view_requests'  // ← Добавили права
+    permission: 'view_requests'
   },
 ]
 

@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: ownproject_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ownproject
+      MYSQL_USER: ownproject
+      MYSQL_PASSWORD: ownproject
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ownproject_network
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ownproject_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - ownproject_network
+
+  # PHP 8.4-FPM + Nginx
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: ownproject_backend
+    restart: unless-stopped
+    working_dir: /var/www/backend
+    volumes:
+      - ./:/var/www/backend
+    ports:
+      - "8000:80"
+    depends_on:
+      - mysql
+    networks:
+      - ownproject_network
+
+  # Frontend (Node.js для dev сервера)
+  frontend:
+    image: node:20
+    container_name: ownproject_frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    networks:
+      - ownproject_network
+
+networks:
+  ownproject_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

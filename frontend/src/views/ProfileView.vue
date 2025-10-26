@@ -5,7 +5,7 @@
     </template>
     <div class="profile">
       <div class="profile-header">
-        <h1>Профиль пользователя new vps2</h1>
+        <h1>Профиль пользователя</h1>
         <p class="subtitle">Управление личными данными</p>
       </div>
 
@@ -38,7 +38,9 @@
                 <label>Имя</label>
                 <div class="info-value-with-edit">
                   <span class="info-value">{{ profileData?.name || '—' }}</span>
-                  <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
+                  <button class="edit-icon-btn"
+                          :disabled="!authStore.can('edit_profile')"
+                          @click="openEditModal" title="Редактировать">
                     <component :is="EditIcon" />
                   </button>
                 </div>
@@ -48,7 +50,9 @@
                 <label>Фамилия</label>
                 <div class="info-value-with-edit">
                   <span class="info-value">{{ profileData?.surname || '—' }}</span>
-                  <button class="edit-icon-btn" @click="openEditModal" title="Редактировать">
+                  <button class="edit-icon-btn"
+                          :disabled="!authStore.can('edit_profile')"
+                          @click="openEditModal" title="Редактировать">
                     <component :is="EditIcon" />
                   </button>
                 </div>
@@ -66,7 +70,9 @@
             </div>
 
             <div class="profile-actions">
-              <button class="btn-primary" @click="openEditModal">
+              <button class="btn-primary"
+                      :disabled="!authStore.can('edit_profile')"
+                      @click="openEditModal">
                 Редактировать профиль
               </button>
               <button class="btn-secondary" @click="openPasswordModal">
@@ -233,10 +239,12 @@ import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import userApi from '../services/me.js'
 import EditIcon from '@/components/icons/EditPencil.vue'
+import { useAuthStore } from '@/stores/auth'
 
 // Локальное состояние профиля
 const profileData = ref(null)
 const loading = ref(true)
+const authStore = useAuthStore()
 
 // Модалка редактирования
 const showEditModal = ref(false)
