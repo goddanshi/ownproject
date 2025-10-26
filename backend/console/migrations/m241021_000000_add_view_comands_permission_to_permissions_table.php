@@ -18,6 +18,7 @@ class m241021_000000_add_view_comands_permission_to_permissions_table extends Mi
                 ['view_teams', 'Просмотр команд', 'Просмотр списка команд', 'teams', time()],
                 ['manage_teams', 'Управление командами', 'Создание и редактирование команд', 'teams', time()],
                 ['delete_teams', 'Удаление команд', 'Удаление команд из системы', 'teams', time()],
+                ['view_my_team', 'Просмотр моей команды', 'Просмотр моей команды', 'teams', time() ],
             ]
         );
     }

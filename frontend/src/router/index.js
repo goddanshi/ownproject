@@ -52,21 +52,31 @@ const router = createRouter({
       name: 'requests',
       component: () => import('../views/RequestsView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/commands',
+      name: 'commands',
+      component: () => import('../views/CommandsView.vue'),
+      meta: { requiresAuth: true}
+    },
+    {
+      path: '/my-team',
+      name: 'my-team',
+      component: () => import('../views/MyTeamView.vue'),
+      meta: { requiresAuth: true, permission: 'view_my_team' } // ← Изменили на view_my_team
     }
   ]
 })
 
-// Navigation guard
+
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Ждём проверки авторизации только если ещё не проверяли
-  if (!authStore.checked) {
-    authStore.loading = true
-    await authStore.checkAuth()
-    authStore.loading = false
-  }
+  // ВСЕГДА проверяем авторизацию и загружаем свежие права
+  authStore.loading = true
+  await authStore.checkAuth()
+  authStore.loading = false
 
   const isAuthenticated = authStore.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
@@ -77,17 +87,15 @@ router.beforeEach(async (to, from, next) => {
   if (requiresAuth && !isAuthenticated) {
     next('/login')
   }
-  // Гостевой роут (login/register) + авторизован → на dashboard
+  // Гостевой роут + авторизован → на dashboard
   else if (isGuestRoute && isAuthenticated) {
     next('/dashboard')
   }
   // Проверка прав доступа
   else if (requiredPermission && !authStore.can(requiredPermission)) {
-    // Нет прав → редирект на dashboard с сообщением (опционально)
     console.warn(`Access denied: missing permission "${requiredPermission}"`)
     next('/dashboard')
   }
-  // Всё остальное - пропускаем
   else {
     next()
   }

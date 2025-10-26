@@ -23,9 +23,9 @@ class m241014_000000_create_permissions_table extends Migration
         // Вставляем базовые права
         $this->batchInsert('{{%permissions}}', ['name', 'label', 'description', 'category', 'created_at'], [
             ['view_dashboard', 'Просмотр дашборда', 'Доступ к главной панели управления', 'dashboard', time()],
-            ['view_workers', 'Просмотр работников', 'Просмотр списка работников', 'workers', time()],
-            ['manage_workers', 'Управление работниками', 'Добавление и редактирование работников', 'workers', time()],
-            ['delete_workers', 'Удаление работников', 'Удаление работников из системы', 'workers', time()],
+            ['view_workers', 'Просмотр сотрудников', 'Просмотр списка сотрудников', 'workers', time()],
+            ['manage_workers', 'Управление сотрудниками', 'Добавление и редактирование сотрудников', 'workers', time()],
+            ['delete_workers', 'Удаление сотрудников', 'Удаление сотрудников из системы', 'workers', time()],
             ['view_tasks', 'Просмотр задач', 'Просмотр списка задач', 'tasks', time()],
             ['manage_tasks', 'Управление задачами', 'Создание и редактирование задач', 'tasks', time()],
             ['assign_tasks', 'Назначение задач', 'Назначение задач работникам', 'tasks', time()],

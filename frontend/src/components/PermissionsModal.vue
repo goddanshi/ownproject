@@ -102,7 +102,7 @@ const availableRoles = computed(() => {
 
 const categoryLabels = {
   dashboard: 'Панель управления',
-  workers: 'Работники',
+  workers: 'Сотрудники',
   tasks: 'Задачи',
   requests: 'Заявки',
   profile: 'Профиль',

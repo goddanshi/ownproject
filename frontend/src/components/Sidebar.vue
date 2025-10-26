@@ -16,20 +16,45 @@
 
       <!-- Навигация - отфильтрованная по правам -->
       <nav class="nav-menu">
-        <RouterLink
-          v-for="item in visibleMenuItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
-          active-class="active"
-        >
-          <span class="icon">
-            <component :is="item.icon" />
-          </span>
-          <transition name="fade">
-            <span v-if="!isCollapsed" class="label">{{ item.label }}</span>
-          </transition>
-        </RouterLink>
+        <!-- Общие роуты -->
+        <div class="menu-section">
+          <RouterLink
+            v-for="item in visibleGeneralItems"
+            :key="item.path"
+            :to="item.path"
+            class="nav-item"
+            active-class="active"
+          >
+            <span class="icon">
+              <component :is="item.icon" />
+            </span>
+            <transition name="fade">
+              <span v-if="!isCollapsed" class="label">{{ item.label }}</span>
+            </transition>
+          </RouterLink>
+        </div>
+
+        <!-- Разделитель -->
+        <hr v-if="visiblePersonalItems.length > 0" class="menu-divider" />
+
+        <!-- Личные роуты -->
+        <div v-if="visiblePersonalItems.length > 0" class="menu-section">
+
+          <RouterLink
+            v-for="item in visiblePersonalItems"
+            :key="item.path"
+            :to="item.path"
+            class="nav-item"
+            active-class="active"
+          >
+            <span class="icon">
+              <component :is="item.icon" />
+            </span>
+            <transition name="fade">
+              <span v-if="!isCollapsed" class="label">{{ item.label }}</span>
+            </transition>
+          </RouterLink>
+        </div>
       </nav>
 
       <button class="logout-btn" @click="handleLogout">
@@ -54,7 +79,7 @@ import DashboardIcon from '@/components/icons/Dashboard.vue'
 import TasksIcon from '@/components/icons/Tasks.vue'
 import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
-import ComandsIcon from "@/components/icons/Comands.vue";
+import ComandsIcon from "@/components/icons/Comands.vue"
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -62,17 +87,17 @@ const authStore = useAuthStore()
 const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 const isMobileOpen = ref(false)
 
-// Все пункты меню с правами
-const menuItems = [
+// Общие пункты меню
+const generalMenuItems = [
   {
     path: '/dashboard',
     label: 'Дашборд',
     icon: DashboardIcon,
-    permission: 'view_dashboard'  // ← Добавили права
+    permission: 'view_dashboard'
   },
   {
     path: '/workers',
-    label: 'Работники',
+    label: 'Сотрудники',
     icon: EmploersIcon,
     permission: 'view_workers'
   },
@@ -80,7 +105,7 @@ const menuItems = [
     path: '/commands',
     label: 'Команды',
     icon: ComandsIcon,
-    permission: 'view_teams'
+    permission: 'view_teams' // Управление командами - для админов/тимлидов
   },
   {
     path: '/tasks',
@@ -93,16 +118,31 @@ const menuItems = [
     label: 'Заявки',
     icon: RequestIcon,
     permission: 'view_requests'
-  },
+  }
 ]
 
-// Фильтруем меню по правам - computed автоматически пересчитается
-const visibleMenuItems = computed(() => {
-  return menuItems.filter(item => {
-    // Если нет требования прав - показываем всем
-    if (!item.permission) return true
+// Личные пункты меню
+const personalMenuItems = [
+  {
+    path: '/my-team',
+    label: 'Моя команда',
+    icon: ComandsIcon,
+    permission: 'view_my_team'
+  }
+]
 
-    // Проверяем права через authStore.can()
+// Фильтруем общие пункты меню по правам
+const visibleGeneralItems = computed(() => {
+  return generalMenuItems.filter(item => {
+    if (!item.permission) return true
+    return authStore.can(item.permission)
+  })
+})
+
+// Фильтруем личные пункты меню по правам
+const visiblePersonalItems = computed(() => {
+  return personalMenuItems.filter(item => {
+    if (!item.permission) return true
     return authStore.can(item.permission)
   })
 })
@@ -217,6 +257,28 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-title {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 0.5rem 0;
 }
 
 .nav-item {

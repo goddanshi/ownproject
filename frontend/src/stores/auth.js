@@ -26,8 +26,6 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.role === 1,
     isTeamlead: (state) => state.user?.role === 2,
     isEmployee: (state) => state.user?.role === 3,
-
-
   },
 
   actions: {
@@ -40,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      // Если уже checked и есть user, просто обновим права
+      // Если уже checked и есть user, всегда загружаем свежие права
       if (this.checked && this.user) {
         await this.loadUserPermissions()
         return
