@@ -39,7 +39,6 @@
 
         <!-- Личные роуты -->
         <div v-if="visiblePersonalItems.length > 0" class="menu-section">
-
           <RouterLink
             v-for="item in visiblePersonalItems"
             :key="item.path"
@@ -54,6 +53,28 @@
               <span v-if="!isCollapsed" class="label">{{ item.label }}</span>
             </transition>
           </RouterLink>
+        </div>
+
+        <!-- Разделитель для проектов -->
+        <hr class="menu-divider" />
+
+        <!-- Проекты - клик открывает боковой сайдбар -->
+        <div class="menu-section">
+          <button
+            class="nav-item nav-item-button"
+            :class="{ active: projectsSidebarOpen }"
+            @click="toggleProjectsSidebar"
+          >
+            <span class="icon">
+              <component :is="projectsMenuItem.icon" />
+            </span>
+            <transition name="fade">
+              <span v-if="!isCollapsed" class="label">{{ projectsMenuItem.label }}</span>
+            </transition>
+            <transition name="fade">
+              <span v-if="!isCollapsed" class="arrow">{{ projectsSidebarOpen ? '▼' : '▶' }}</span>
+            </transition>
+          </button>
         </div>
       </nav>
 
@@ -77,6 +98,7 @@ import { useAuthStore } from '../stores/auth.js'
 import EmploersIcon from '@/components/icons/Emploers.vue'
 import DashboardIcon from '@/components/icons/Dashboard.vue'
 import TasksIcon from '@/components/icons/Tasks.vue'
+import ProjectsIcon from '@/components/icons/Projects.vue'
 import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
 import ComandsIcon from "@/components/icons/Comands.vue"
@@ -86,6 +108,7 @@ const authStore = useAuthStore()
 
 const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 const isMobileOpen = ref(false)
+const projectsSidebarOpen = ref(localStorage.getItem('projects-sidebar-open') === 'true')
 
 // Общие пункты меню
 const generalMenuItems = [
@@ -131,6 +154,15 @@ const personalMenuItems = [
   }
 ]
 
+// Пункт меню с проектами (отдельная секция)
+const projectsMenuItem = {
+  path: '/projects',
+  label: 'Проекты',
+  icon: ProjectsIcon,
+  hasSubmenu: true
+  //permission: 'view_projects'
+}
+
 // Фильтруем общие пункты меню по правам
 const visibleGeneralItems = computed(() => {
   return generalMenuItems.filter(item => {
@@ -160,6 +192,11 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
+const toggleProjectsSidebar = () => {
+  projectsSidebarOpen.value = !projectsSidebarOpen.value
+  localStorage.setItem('projects-sidebar-open', projectsSidebarOpen.value.toString())
+}
+
 watch(isCollapsed, (newValue) => {
   localStorage.setItem('sidebar-collapsed', newValue.toString())
 })
@@ -168,6 +205,10 @@ onMounted(() => {
   const savedState = localStorage.getItem('sidebar-collapsed')
   if (savedState !== null) {
     isCollapsed.value = savedState === 'true'
+  }
+  const projectsSidebarState = localStorage.getItem('projects-sidebar-open')
+  if (projectsSidebarState !== null) {
+    projectsSidebarOpen.value = projectsSidebarState === 'true'
   }
 })
 </script>
@@ -295,6 +336,13 @@ onMounted(() => {
   position: relative;
 }
 
+.nav-item-button {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
 .sidebar.collapsed .nav-item {
   justify-content: center;
   padding: 1rem 0.5rem;
@@ -307,6 +355,12 @@ onMounted(() => {
 .nav-item.active {
   background: #2d3748;
   color: white;
+}
+
+.nav-item .arrow {
+  margin-left: auto;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
 }
 
 .icon {

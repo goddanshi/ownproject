@@ -82,6 +82,12 @@ class Team extends ActiveRecord
             ->via('teamMembers');
     }
 
+    // Связь с проектами
+    public function getProjects()
+    {
+        return $this->hasMany(Project::class, ['team_id' => 'id']);
+    }
+
     // Получить всех участников включая тимлида
     public function getAllMembers()
     {

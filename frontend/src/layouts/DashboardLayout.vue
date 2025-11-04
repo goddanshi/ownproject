@@ -2,7 +2,7 @@
   <div class="dashboard-layout">
     <Sidebar />
 
-    <main :class="['main-content', { collapsed: sidebarCollapsed }]">
+    <main :class="['main-content', { collapsed: sidebarCollapsed, 'projects-open': projectsSidebarOpen }]">
       <div class="dashboard-header">
         <div class="header-left">
           <slot name="header-left">
@@ -55,6 +55,8 @@
       </div>
     </main>
 
+    <ProjectsSidebar />
+
     <PermissionsModal v-if="showPermissionsModal" @close="closePermissionsModal" />
   </div>
 </template>
@@ -62,12 +64,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
+import ProjectsSidebar from '../components/ProjectsSidebar.vue'
 import PermissionsModal from '../components/PermissionsModal.vue'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+const projectsSidebarOpen = ref(localStorage.getItem('projects-sidebar-open') === 'true')
 const showSettings = ref(false)
 const showPermissionsModal = ref(false)
 const settingsRef = ref(null)
@@ -104,6 +108,7 @@ const handleClickOutside = (event) => {
 
 const updateSidebarState = () => {
   sidebarCollapsed.value = localStorage.getItem('sidebar-collapsed') === 'true'
+  projectsSidebarOpen.value = localStorage.getItem('projects-sidebar-open') === 'true'
 }
 
 onMounted(() => {
@@ -138,6 +143,14 @@ onMounted(() => {
 
 .main-content.collapsed {
   margin-left: 80px;
+}
+
+.main-content.projects-open {
+  margin-left: 600px;
+}
+
+.main-content.collapsed.projects-open {
+  margin-left: 400px;
 }
 
 .dashboard-header {
@@ -315,6 +328,14 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .main-content {
+    margin-left: 0;
+  }
+
+  .main-content.projects-open {
+    margin-left: 0;
+  }
+
+  .main-content.collapsed.projects-open {
     margin-left: 0;
   }
 

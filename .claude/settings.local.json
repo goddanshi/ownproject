@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose exec db mysql:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
