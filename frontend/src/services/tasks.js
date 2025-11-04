@@ -7,6 +7,12 @@ export default {
     return response.data
   },
 
+  // Получить список активных задач (статусы 1, 2, 3)
+  async getActiveTasks() {
+    const response = await api.get('/tasks/active')
+    return response.data
+  },
+
   // Получить детали задачи
   async getTask(id) {
     const response = await api.get(`/tasks/${id}`)

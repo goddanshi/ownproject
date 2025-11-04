@@ -35,9 +35,9 @@
                   </svg>
                 </div>
               </div>
-              <div class="stat-value">156</div>
+              <div class="stat-value">{{ tasks.length }}</div>
               <div class="stat-footer">
-                <span class="stat-change">42 активных</span>
+                <span class="stat-change">{{ activeTasks.length }} активных</span>
               </div>
             </div>
 
@@ -127,11 +127,14 @@ import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../stores/auth.js'
 import usersApi from '../services/employers.js'
+import tasksApi from '../services/tasks'
 
 const authStore = useAuthStore()
 
 const loading = ref(true)
 const profilesData = ref([])
+const tasks = ref([])
+const activeTasks = ref([])
 
 const currentDate = computed(() => {
   const date = new Date()
@@ -179,8 +182,34 @@ const loadProfiles = async () => {
   }
 }
 
+const loadTasks = async () => {
+  try {
+    const result = await tasksApi.getTasks()
+    if (result.success) {
+      tasks.value = Array.isArray(result.tasks) ? result.tasks : []
+    }
+  } catch (error) {
+    console.error('Failed to load tasks:', error)
+    tasks.value = []
+  }
+}
+
+const loadActiveTasks = async () => {
+  try {
+    const result = await tasksApi.getActiveTasks()
+    if (result.success) {
+      activeTasks.value = Array.isArray(result.tasks) ? result.tasks : []
+    }
+  } catch (error) {
+    console.error('Failed to load active tasks:', error)
+    activeTasks.value = []
+  }
+}
+
 onMounted(() => {
   loadProfiles()
+  loadTasks()
+  loadActiveTasks()
 })
 </script>
 

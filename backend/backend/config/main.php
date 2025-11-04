@@ -54,9 +54,9 @@ return [
 
                 // --------------------------------
                 // Settings routes
-                'OPTIONS settings/role-permissions' => 'settings/options',  // ← ДОБАВЬ КОНКРЕТНЫЙ
-                'OPTIONS settings/permissions' => 'settings/options',        // ← ДОБАВЬ КОНКРЕТНЫЙ
-                'OPTIONS settings/update-role-permissions' => 'settings/options', // ← ДОБАВЬ КОНКРЕТНЫЙ
+                'OPTIONS settings/role-permissions' => 'settings/options',  
+                'OPTIONS settings/permissions' => 'settings/options',        
+                'OPTIONS settings/update-role-permissions' => 'settings/options', 
                 'GET settings/permissions' => 'settings/get-permissions',
                 'GET settings/role-permissions' => 'settings/get-role-permissions',
                 'POST settings/update-role-permissions' => 'settings/update-role-permissions',
@@ -99,6 +99,7 @@ return [
                 // Tasks routes
                 'OPTIONS tasks/<action>' => 'tasks/options',
                 'GET tasks' => 'tasks/index',
+                'GET tasks/active' => 'tasks/get-active-tasks',
                 'GET tasks/<id:\d+>' => 'tasks/view',
                 'POST tasks/create' => 'tasks/create',
                 'POST tasks/update' => 'tasks/update',

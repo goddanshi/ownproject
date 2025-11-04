@@ -91,6 +91,60 @@ class TasksController extends Controller
         ];
     }
 
+    // Получить активные задачи (статусы: К выполнению, В работе, На проверке)
+    public function actionGetActiveTasks()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        // Получаем активные задачи со статусами 1, 2, 3
+        $tasks = Task::find()
+            ->with(['project', 'assignees', 'creator'])
+            ->where(['status' => [Task::STATUS_TODO, Task::STATUS_IN_PROGRESS, Task::STATUS_REVIEW]])
+            ->orderBy(['priority' => SORT_DESC, 'deadline' => SORT_ASC])
+            ->all();
+
+        $result = [];
+        foreach ($tasks as $task) {
+            $assignees = [];
+            foreach ($task->assignees as $assignee) {
+                $assignees[] = [
+                    'id' => $assignee->id,
+                    'username' => $assignee->username,
+                    'name' => $assignee->name,
+                    'surname' => $assignee->surname,
+                ];
+            }
+
+            $result[] = [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'status_label' => $task->getStatusLabel(),
+                'priority' => $task->priority,
+                'priority_label' => $task->getPriorityLabel(),
+                'deadline' => $task->deadline,
+                'project' => [
+                    'id' => $task->project->id,
+                    'name' => $task->project->name,
+                ],
+                'assignees' => $assignees,
+                'total_time' => $task->getTotalTime(),
+                'created_at' => $task->created_at,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'tasks' => $result
+        ];
+    }
+
     // Получить детальную информацию о задаче
     public function actionView()
     {
