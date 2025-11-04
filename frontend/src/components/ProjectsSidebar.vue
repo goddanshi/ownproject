@@ -22,10 +22,10 @@
             class="search-input"
           />
           <button class="add-btn" @click="openCreateFolderModal" title="Создать папку">
-            📁+
+            <CatalogIcon />
           </button>
           <button class="add-btn" @click="openCreateProjectModal" title="Создать проект">
-            📋+
+            <ProjectsIcon />
           </button>
         </div>
 
@@ -99,6 +99,8 @@ import foldersApi from '../services/folders'
 import FolderModal from './FolderModal.vue'
 import ProjectModal from './ProjectModal.vue'
 import TreeNode from './TreeNode.vue'
+import CatalogIcon from './icons/Catalog.vue'
+import ProjectsIcon from './icons/Projects.vue'
 
 const isOpen = ref(localStorage.getItem('projects-sidebar-open') === 'true')
 const mainSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
@@ -414,7 +416,12 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
-  font-size: 1rem;
+}
+
+.add-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
 }
 
 .add-btn:hover {
