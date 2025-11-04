@@ -44,7 +44,8 @@
               <span class="user-email">{{ authStore.user?.email }}</span>
             </div>
             <div class="user-avatar">
-              {{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}
+              <img :src="authStore.user?.avatar" alt="Аватар" v-if="authStore.user?.avatar">
+              <div v-else>{{ authStore.user?.username?.[0]?.toUpperCase() || 'U' }}</div>
             </div>
           </RouterLink>
         </div>
@@ -320,6 +321,13 @@ onMounted(() => {
   font-size: 1.1rem;
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .content-wrapper {

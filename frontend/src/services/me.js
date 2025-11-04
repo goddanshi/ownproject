@@ -27,5 +27,12 @@ export default {
     }
 
     return response.data
+  },
+
+  async updateAvatar(avatar) {
+    const response = await api.post('/user/update-avatar', {
+      avatar
+    })
+    return response.data
   }
 }

@@ -18,9 +18,10 @@
         <div class="profile-card">
           <div class="profile-avatar-section">
             <div class="profile-avatar-large">
-              {{ profileData?.username?.[0]?.toUpperCase() || 'U' }}
+              <img :src="profileData.avatar" alt="Аватар пользователя" v-if="profileData.avatar">
+              <div v-else>{{ profileData?.username?.[0]?.toUpperCase() || 'U' }}</div>
             </div>
-            <button class="change-avatar-btn" disabled>
+            <button class="change-avatar-btn" @click="openAvatarModal">
               Изменить фото
             </button>
           </div>
@@ -172,6 +173,47 @@
         </div>
       </div>
 
+      <!-- Модалка смены аватара -->
+      <div v-if="showAvatarModal" class="modal-overlay" @click.self="closeAvatarModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Изменить фото профиля</h2>
+            <button class="modal-close" @click="closeAvatarModal">✕</button>
+          </div>
+
+          <form @submit.prevent="handleUpdateAvatar">
+            <div class="form-group">
+              <label for="avatar-url">Ссылка на изображение</label>
+              <input
+                id="avatar-url"
+                v-model="avatarForm.url"
+                type="url"
+                placeholder="https://example.com/avatar.jpg"
+                required
+              />
+            </div>
+
+            <div v-if="avatarForm.url" class="avatar-preview">
+              <p>Предпросмотр:</p>
+              <img :src="avatarForm.url" alt="Предпросмотр аватара" @error="handleImageError">
+            </div>
+
+            <div v-if="avatarMessage" :class="['message', avatarMessageType]">
+              {{ avatarMessage }}
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeAvatarModal">
+                Отмена
+              </button>
+              <button type="submit" class="btn-primary" :disabled="avatarLoading">
+                {{ avatarLoading ? 'Сохранение...' : 'Сохранить' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Модалка смены пароля -->
       <div v-if="showPasswordModal" class="modal-overlay" @click.self="closePasswordModal">
         <div class="modal">
@@ -256,6 +298,15 @@ const editForm = ref({
 const editLoading = ref(false)
 const editMessage = ref('')
 const editMessageType = ref('')
+
+// Модалка смены аватара
+const showAvatarModal = ref(false)
+const avatarForm = ref({
+  url: ''
+})
+const avatarLoading = ref(false)
+const avatarMessage = ref('')
+const avatarMessageType = ref('')
 
 // Модалка смены пароля
 const showPasswordModal = ref(false)
@@ -347,6 +398,60 @@ const handleUpdateProfile = async () => {
     editMessageType.value = 'error'
   } finally {
     editLoading.value = false
+  }
+}
+
+// Открыть модалку смены аватара
+const openAvatarModal = () => {
+  avatarForm.value = {
+    url: profileData.value?.avatar || ''
+  }
+  avatarMessage.value = ''
+  showAvatarModal.value = true
+}
+
+// Закрыть модалку смены аватара
+const closeAvatarModal = () => {
+  showAvatarModal.value = false
+  avatarMessage.value = ''
+}
+
+// Обработка ошибки загрузки изображения
+const handleImageError = () => {
+  avatarMessage.value = 'Не удалось загрузить изображение по указанной ссылке'
+  avatarMessageType.value = 'error'
+}
+
+// Обновить аватар
+const handleUpdateAvatar = async () => {
+  avatarLoading.value = true
+  avatarMessage.value = ''
+
+  try {
+    const result = await userApi.updateAvatar(avatarForm.value.url)
+
+    console.log('Avatar update result:', result)
+
+    if (result.success) {
+      profileData.value = result.user
+      // Обновляем аватар в auth store
+      authStore.updateUser({ avatar: result.user.avatar })
+      avatarMessage.value = 'Аватар успешно обновлён'
+      avatarMessageType.value = 'success'
+
+      setTimeout(() => {
+        closeAvatarModal()
+      }, 1500)
+    } else {
+      avatarMessage.value = result.message || 'Ошибка обновления аватара'
+      avatarMessageType.value = 'error'
+    }
+  } catch (error) {
+    console.error('Avatar update error:', error)
+    avatarMessage.value = 'Ошибка подключения к серверу'
+    avatarMessageType.value = 'error'
+  } finally {
+    avatarLoading.value = false
   }
 }
 
@@ -500,16 +605,29 @@ h1 {
   font-size: 3rem;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .change-avatar-btn {
   padding: 0.5rem 1rem;
-  background: #fafafa;
+  background: white;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   font-size: 0.85rem;
-  cursor: not-allowed;
-  color: #999;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.change-avatar-btn:hover {
+  border-color: #2d3748;
+  background: #f5f5f7;
 }
 
 .profile-info-section h2 {
@@ -866,6 +984,27 @@ h1 {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e0e0e0;
+}
+
+/* Предпросмотр аватара */
+.avatar-preview {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.avatar-preview p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.avatar-preview img {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e0e0e0;
 }
 
 @media (max-width: 768px) {

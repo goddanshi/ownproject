@@ -62,6 +62,7 @@ class ApiController extends Controller
                     'username' => $user->username,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'avatar' => $user->avatar,
                 ]
             ];
         }
@@ -95,6 +96,7 @@ class ApiController extends Controller
                     'username' => $user->username,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'avatar' => $user->avatar,
                 ]
             ];
         }
@@ -123,13 +125,21 @@ class ApiController extends Controller
             return ['success' => false, 'message' => 'Invalid or expired token'];
         }
 
+        // Получаем свежие данные пользователя из БД
+        $user = User::findOne($payload['userId']);
+
+        if (!$user) {
+            return ['success' => false, 'message' => 'User not found'];
+        }
+
         return [
             'success' => true,
             'user' => [
-                'id' => $payload['userId'],
-                'username' => $payload['username'],
-                'email' => $payload['email'],
-                'role' => $payload['role'],
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'avatar' => $user->avatar,
             ]
         ];
     }

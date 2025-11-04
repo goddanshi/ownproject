@@ -15,7 +15,8 @@
         <!-- Аватар и основная инфо -->
         <div class="worker-header">
           <div class="avatar-large">
-            {{ worker.username[0].toUpperCase() }}
+              <img :src="worker.avatar" alt="Аватар" v-if="worker.avatar">
+                  <div v-else>{{ worker.username[0].toUpperCase() }}</div>
           </div>
           <div class="worker-main-info">
             <h3>{{ worker.username }}</h3>
@@ -231,6 +232,13 @@ onMounted(() => {
   font-size: 2rem;
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .worker-main-info {

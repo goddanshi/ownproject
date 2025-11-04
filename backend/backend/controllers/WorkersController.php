@@ -62,6 +62,7 @@ class WorkersController extends Controller
                 'name' => $worker->name,
                 'surname' => $worker->surname,
                 'role' => $worker->role,
+                'avatar' => $worker->avatar,
                 'created_at' => $worker->created_at,
             ];
         }
@@ -98,6 +99,7 @@ class WorkersController extends Controller
                 'name' => $worker->name,
                 'surname' => $worker->surname,
                 'role' => $worker->role,
+                'avatar' => $worker->avatar,
                 'created_at' => $worker->created_at,
             ]
         ];

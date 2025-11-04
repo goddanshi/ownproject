@@ -20,6 +20,7 @@ use yii\web\IdentityInterface;
  * @property string $verification_token
  * @property string $email
  * @property string $auth_key
+ * @property string $avatar
  * @property integer $status
  * @property integer $role
  * @property integer $created_at
@@ -156,6 +157,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function getId()
     {
         return $this->getPrimaryKey();
+    }
+
+    public function getAvatar(){
+        return $this->avatar;
     }
 
     /**

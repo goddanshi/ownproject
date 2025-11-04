@@ -51,6 +51,7 @@ return [
                 'GET user/profiles' => 'user/profiles',
                 'POST user/update-profile' => 'user/update-profile',
                 'POST user/change-password' => 'user/change-password',
+                'POST user/update-avatar' => 'user/update-avatar',
 
                 // --------------------------------
                 // Settings routes

@@ -144,6 +144,12 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.isAuthenticated = false
       this.checked = false
+    },
+
+    updateUser(userData) {
+      if (this.user) {
+        this.user = { ...this.user, ...userData }
+      }
     }
   }
 })

@@ -60,7 +60,8 @@
             <td>
               <div class="user-cell">
                 <div class="avatar">
-                  {{ worker.username[0].toUpperCase() }}
+                  <img :src="worker.avatar" alt="Аватар" v-if="worker.avatar">
+                  <div v-else>{{ worker.username[0].toUpperCase() }}</div>
                 </div>
                 <span class="username">{{ worker.username }}</span>
               </div>
@@ -464,6 +465,13 @@ onMounted(() => {
   font-size: 1rem;
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .username {

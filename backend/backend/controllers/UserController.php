@@ -213,9 +213,71 @@ class UserController extends Controller
                 'surname' => $user->surname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
                 'status' => $user->status,
                 'created_at' => $user->created_at,
             ]
+        ];
+    }
+
+    public function actionUpdateAvatar()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        // Проверяем JWT токен
+        $authHeader = Yii::$app->request->headers->get('Authorization');
+
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $token = $matches[1];
+        $payload = JwtHelper::validateToken($token);
+
+        if (!$payload) {
+            return ['success' => false, 'message' => 'Invalid token'];
+        }
+
+        // Находим пользователя
+        $user = User::findOne($payload['userId']);
+
+        if (!$user) {
+            return ['success' => false, 'message' => 'User not found'];
+        }
+
+        $data = Yii::$app->request->post();
+
+        // Проверяем наличие avatar в запросе
+        if (!isset($data['avatar'])) {
+            return [
+                'success' => false,
+                'message' => 'Avatar URL is required',
+                'errors' => ['avatar' => ['URL аватара обязателен']]
+            ];
+        }
+
+        // Устанавливаем аватар
+        $user->avatar = $data['avatar'];
+
+        if ($user->save()) {
+            return [
+                'success' => true,
+                'message' => 'Avatar updated successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'name' => $user->name,
+                    'surname' => $user->surname,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                ]
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Failed to update avatar',
+            'errors' => $user->errors
         ];
     }
 
@@ -260,6 +322,7 @@ class UserController extends Controller
                 'surname' => $user->surname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
                 'status' => $user->status,
                 'created_at' => $user->created_at,
             ];

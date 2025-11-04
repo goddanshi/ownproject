@@ -100,7 +100,8 @@
                 class="user-item"
               >
                 <div class="user-avatar-small">
-                  {{ user.username?.[0]?.toUpperCase() || 'U' }}
+                  <img :src="user.avatar" alt="Аватар пользователя" v-if="user.avatar">
+                  <div v-else>{{ user?.username?.[0]?.toUpperCase() || 'U' }}</div>
                 </div>
                 <div class="user-details">
                   <div class="user-name-row">
@@ -182,34 +183,8 @@ const loadProfiles = async () => {
   }
 }
 
-const loadTasks = async () => {
-  try {
-    const result = await tasksApi.getTasks()
-    if (result.success) {
-      tasks.value = Array.isArray(result.tasks) ? result.tasks : []
-    }
-  } catch (error) {
-    console.error('Failed to load tasks:', error)
-    tasks.value = []
-  }
-}
-
-const loadActiveTasks = async () => {
-  try {
-    const result = await tasksApi.getActiveTasks()
-    if (result.success) {
-      activeTasks.value = Array.isArray(result.tasks) ? result.tasks : []
-    }
-  } catch (error) {
-    console.error('Failed to load active tasks:', error)
-    activeTasks.value = []
-  }
-}
-
 onMounted(() => {
   loadProfiles()
-  loadTasks()
-  loadActiveTasks()
 })
 </script>
 
@@ -548,6 +523,13 @@ h1 {
   font-size: 1.1rem;
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.user-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-details {
