@@ -10,9 +10,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: 'http://185.213.240.236',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: (origin, callback) => {
+    if (!origin || origin.startsWith('http://185.213.240.236')) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  methods: ['GET','POST'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 // 🔒 Middleware ограничения запросов
 const rateLimitMiddleware = rateLimit({
