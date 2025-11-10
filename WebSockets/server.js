@@ -9,7 +9,11 @@ const axios = require('axios');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // 🔒 Middleware ограничения запросов
 const rateLimitMiddleware = rateLimit({
