@@ -69,7 +69,7 @@ services:
   # Express WebSockets
   websocket:
     build:
-      context: ./websocket
+      context: ./WebSockets
       dockerfile: Dockerfile
     container_name: ownproject_websocket
     restart: unless-stopped

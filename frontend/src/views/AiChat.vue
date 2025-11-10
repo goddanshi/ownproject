@@ -40,7 +40,7 @@ const sendPrompt = async () => {
   response.value = ''
 
   try {
-    const res = await axios.post('http://localhost:3000/api/generate', { prompt: prompt.value })
+    const res = await axios.post('http://185.213.240.236:3000/api/generate', { prompt: prompt.value })
     response.value = res.data.result
   } catch (err) {
     console.error('Ошибка при запросе:', err)
