@@ -102,7 +102,7 @@ import ProjectsIcon from '@/components/icons/Projects.vue'
 import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
 import ComandsIcon from "@/components/icons/Comands.vue"
-import AiIcon from "@/components/icons/Ai.vue"
+import AiIcon from "@/components/icons/AI.vue"
 
 const router = useRouter()
 const authStore = useAuthStore()
