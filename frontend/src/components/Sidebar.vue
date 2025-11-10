@@ -102,6 +102,7 @@ import ProjectsIcon from '@/components/icons/Projects.vue'
 import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
 import ComandsIcon from "@/components/icons/Comands.vue"
+import AiIcon from "@/components/icons/Ai.vue"
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -151,6 +152,11 @@ const personalMenuItems = [
     label: 'Моя команда',
     icon: ComandsIcon,
     permission: 'view_my_team'
+  },
+  {
+    path: '/aichat',
+    label: "ИИ чат",
+    icon: AiIcon,
   }
 ]
 

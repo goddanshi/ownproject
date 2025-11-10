@@ -72,6 +72,12 @@ const router = createRouter({
       meta: { requiresAuth: true}
     },
     {
+      path: '/aichat',
+      name: 'aichat',
+      component: () => import('../views/AiChat.vue'),
+      meta: { requiresAuth: true}
+    },
+    {
       path: '/my-team',
       name: 'my-team',
       component: () => import('../views/MyTeamView.vue'),
