@@ -74,12 +74,14 @@ async function generateResponse(prompt) {
     return response.data.choices?.[0]?.message?.content?.trim() || 'Пустой ответ';
     
   } catch (error) {
-    console.error('Ошибка при обращении к ИИ:');
-    console.error('Status:', error.response?.status);
-    console.error('Data:', JSON.stringify(error.response?.data, null, 2));
-    console.error('Message:', error.message);
-    throw new Error('Ошибка при получении ответа от модели: ' + (error.response?.data?.error?.message || error.message));
-  }
+  console.error('Ошибка при обращении к ИИ:');
+  console.error('Status:', error.response?.status || 'нет');
+  console.error('Headers:', error.response?.headers || 'нет');
+  console.error('Data:', JSON.stringify(error.response?.data, null, 2) || 'нет');
+  console.error('Message:', error.message);
+  
+  return 'Ошибка: ' + (error.response?.data?.error?.message || error.message);
+}
 }
 
 // 📩 Основной эндпоинт
