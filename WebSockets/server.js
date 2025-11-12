@@ -30,12 +30,12 @@ app.get('/', async (req, res) =>{
 // 🧠 Функция генерации ответа от ИИ
 async function generateResponse(prompt) {
   try {
-    // Здесь может быть любой AI backend — пример для OpenAI совместимого API
+    // Запрос к OpenRouter API с новой моделью kwaipilot/kat-coder-pro:free
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-      model: 'meta-llama/llama-4-maverick:free',
+      model: 'kwaipilot/kat-coder-pro:free',
       messages: [
-        { 
-        role: 'system', 
+        {
+        role: 'system',
         content: `Ты — опытный и профессиональный SEO-специалист, копирайтер и редактор.
         Твоя задача — помогать пользователю создавать тексты и заголовки на русском языке, полностью соответствующие стандартам SEO, орфографии, пунктуации и стиля.
 
@@ -56,14 +56,16 @@ async function generateResponse(prompt) {
 
         Главная цель — помочь пользователю создать качественный SEO-текст, который будет понятен людям и эффективен для поисковых систем.`
         },
-        { 
-        role: 'user', 
-        content: prompt 
+        {
+        role: 'user',
+        content: prompt
         }
       ]
     }, {
       headers: {
         'Authorization': `Bearer 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`,
+        'HTTP-Referer': 'http://localhost:3000',
+        'X-Title': 'SEO Content Generator',
         'Content-Type': 'application/json'
       }
     });
