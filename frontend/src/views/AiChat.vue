@@ -1,8 +1,10 @@
 <template>
   <DashboardLayout>
+     <template #header-left>
+      <h1>AI Ассистент SEO</h1>
+    </template>
     <div class="ai-chat-page">
       <div class="page-header">
-        <h1>AI Ассистент SEO</h1>
         <p class="subtitle">Профессиональный помощник для создания SEO-текстов и заголовков</p>
       </div>
 
@@ -23,7 +25,8 @@
             >
               <div class="message-avatar">
                 <div v-if="message.role === 'user'" class="avatar-user">
-                  {{ getUserInitial() }}
+                  <img :src="user.avatar" alt="Аватар пользователя" v-if="user.avatar">
+                  <div v-else>{{ user?.username?.[0]?.toUpperCase() || 'U' }}</div>
                 </div>
                 <div v-else class="avatar-ai">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -126,14 +129,19 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth.js'
 
+const authStore = useAuthStore()
 const prompt = ref('')
 const loading = ref(false)
 const chatHistory = ref([])
 const chatHistoryRef = ref(null)
+
+// Получаем данные пользователя из authStore
+const user = computed(() => authStore.user || {})
 
 const suggestions = [
   { icon: '✍️', text: 'Создать SEO-заголовок для статьи о...' },
@@ -141,10 +149,6 @@ const suggestions = [
   { icon: '🔍', text: 'Подобрать ключевые слова для темы...' },
   { icon: '📊', text: 'Создать структуру статьи на тему...' }
 ]
-
-const getUserInitial = () => {
-  return 'У' // Можете заменить на реальные инициалы из authStore
-}
 
 const formatTime = () => {
   const now = new Date()
@@ -215,9 +219,35 @@ const clearChat = () => {
     prompt.value = ''
   }
 }
+
+// Загружаем данные пользователя при монтировании компонента (если нужно)
+onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.fetchUser()
+  }
+})
 </script>
 
 <style scoped>
+.avatar-user {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  color: white;
+  overflow: hidden; /* Добавьте это */
+}
+
+.avatar-user img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .ai-chat-page {
   max-width: 1200px;
   margin: 0 auto;

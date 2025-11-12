@@ -155,7 +155,7 @@ const personalMenuItems = [
   },
   {
     path: '/aichat',
-    label: "ИИ чат",
+    label: "AI Ассистент",
     icon: AiIcon,
   }
 ]

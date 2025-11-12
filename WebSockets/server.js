@@ -32,7 +32,7 @@ async function generateResponse(prompt) {
   try {
     // Здесь может быть любой AI backend — пример для OpenAI совместимого API
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-      model: 'minimax/minimax-m2:free',
+      model: 'meta-llama/llama-4-maverick:free',
       messages: [
         { 
         role: 'system', 
