@@ -6,7 +6,7 @@
         <p>Загрузка...</p>
       </div>
 
-      <div v-else-if="task">
+      <div v-else-if="task" class="modal-layout">
         <div class="modal-header">
           <h2>{{ task.title }}</h2>
           <div class="header-actions">
@@ -24,7 +24,8 @@
           </div>
         </div>
 
-        <div class="task-details">
+        <div class="modal-body">
+          <div class="task-details">
           <!-- Статус и приоритет -->
           <div class="status-row">
             <span :class="['status-badge', `status-${task.status}`]">
@@ -124,6 +125,12 @@
             </div>
           </div>
         </div>
+
+        <!-- Правая колонка - чат -->
+        <div class="chat-column">
+          <TaskChat :task-id="taskId" />
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -133,6 +140,7 @@
 import { ref, onMounted, computed } from 'vue'
 import tasksApi from '../../services/tasks'
 import { useAuthStore } from '../../stores/auth'
+import TaskChat from '../../components/TaskChat.vue'
 
 const props = defineProps({
   taskId: Number
@@ -245,9 +253,41 @@ onMounted(() => {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 800px;
+  max-width: 1400px;
   max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.modal-body {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  flex: 1;
+  overflow: hidden;
+  border-top: 1px solid #e0e0e0;
+}
+
+.task-details {
   overflow-y: auto;
+  height: 100%;
+  padding: 1.5rem;
+}
+
+.chat-column {
+  border-left: 1px solid #e0e0e0;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .loading {
@@ -275,7 +315,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  background: white;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -331,9 +372,6 @@ onMounted(() => {
   padding: 0;
 }
 
-.task-details {
-  padding: 1.5rem;
-}
 
 .status-row {
   display: flex;
@@ -493,5 +531,32 @@ onMounted(() => {
 .tracking-date {
   color: #999;
   text-align: right;
+}
+
+/* Адаптивность для планшетов и мобильных */
+@media (max-width: 1024px) {
+  .modal-content {
+    max-width: 95vw;
+  }
+
+  .modal-body {
+    grid-template-columns: 1fr 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-column {
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    max-height: 400px;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
 }
 </style>

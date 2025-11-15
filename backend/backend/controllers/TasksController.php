@@ -11,6 +11,7 @@ use common\models\User;
 use common\models\Task;
 use common\models\Project;
 use common\models\TimeTracking;
+use common\models\TaskMessage;
 
 class TasksController extends Controller
 {
@@ -488,6 +489,140 @@ class TasksController extends Controller
         return [
             'success' => false,
             'message' => 'Ошибка остановки отслеживания времени'
+        ];
+    }
+
+    // === Методы чата задачи ===
+
+    /**
+     * Получить сообщения чата задачи (с поддержкой long polling)
+     */
+    public function actionGetMessages()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $taskId = Yii::$app->request->get('task_id');
+        $lastMessageId = Yii::$app->request->get('last_message_id');
+        $timeout = (int) Yii::$app->request->get('timeout', 30); // Long polling timeout
+
+        if (!$taskId) {
+            return ['success' => false, 'message' => 'task_id обязателен'];
+        }
+
+        $task = Task::findOne($taskId);
+        if (!$task) {
+            return ['success' => false, 'message' => 'Задача не найдена'];
+        }
+
+        // Long polling: ждем появления новых сообщений
+        $startTime = time();
+        $maxWaitTime = min($timeout, 30); // Максимум 30 секунд
+
+        while (time() - $startTime < $maxWaitTime) {
+            $messages = TaskMessage::getMessages($taskId, 50, $lastMessageId);
+
+            if (!empty($messages)) {
+                // Новые сообщения найдены
+                $result = [];
+                foreach ($messages as $message) {
+                    $result[] = $message->toArray();
+                }
+
+                return [
+                    'success' => true,
+                    'messages' => $result
+                ];
+            }
+
+            // Ждем 1 секунду перед следующей проверкой
+            sleep(1);
+        }
+
+        // Таймаут истек, новых сообщений нет
+        return [
+            'success' => true,
+            'messages' => []
+        ];
+    }
+
+    /**
+     * Получить все сообщения чата задачи (первоначальная загрузка)
+     */
+    public function actionGetAllMessages()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $taskId = Yii::$app->request->get('task_id');
+        $limit = (int) Yii::$app->request->get('limit', 50);
+
+        if (!$taskId) {
+            return ['success' => false, 'message' => 'task_id обязателен'];
+        }
+
+        $task = Task::findOne($taskId);
+        if (!$task) {
+            return ['success' => false, 'message' => 'Задача не найдена'];
+        }
+
+        $messages = TaskMessage::getMessages($taskId, $limit);
+        $result = [];
+        foreach ($messages as $message) {
+            $result[] = $message->toArray();
+        }
+
+        return [
+            'success' => true,
+            'messages' => $result
+        ];
+    }
+
+    /**
+     * Отправить сообщение в чат задачи
+     */
+    public function actionSendMessage()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $taskId = $data['task_id'] ?? null;
+        $messageText = $data['message'] ?? null;
+
+        if (!$taskId || !$messageText) {
+            return ['success' => false, 'message' => 'task_id и message обязательны'];
+        }
+
+        $task = Task::findOne($taskId);
+        if (!$task) {
+            return ['success' => false, 'message' => 'Задача не найдена'];
+        }
+
+        $message = TaskMessage::createMessage($taskId, $user->id, trim($messageText));
+
+        if ($message) {
+            return [
+                'success' => true,
+                'message' => $message->toArray()
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка отправки сообщения'
         ];
     }
 

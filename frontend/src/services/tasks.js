@@ -85,5 +85,39 @@ export default {
       task_id: taskId
     })
     return response.data
+  },
+
+  // === Методы чата ===
+
+  // Получить все сообщения чата задачи
+  async getAllChatMessages(taskId, limit = 50) {
+    const response = await api.get('/tasks/get-all-messages', {
+      params: {
+        task_id: taskId,
+        limit
+      }
+    })
+    return response.data
+  },
+
+  // Получить новые сообщения (long polling)
+  async getChatMessages(taskId, lastMessageId = null, timeout = 30) {
+    const response = await api.get('/tasks/get-messages', {
+      params: {
+        task_id: taskId,
+        last_message_id: lastMessageId,
+        timeout
+      }
+    })
+    return response.data
+  },
+
+  // Отправить сообщение в чат
+  async sendChatMessage(taskId, message) {
+    const response = await api.post('/tasks/send-message', {
+      task_id: taskId,
+      message
+    })
+    return response.data
   }
 }
