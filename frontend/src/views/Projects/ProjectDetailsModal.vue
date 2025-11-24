@@ -97,6 +97,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно детализации задачи -->
+    <TaskDetailsModal
+      v-if="showTaskDetails && selectedTaskId"
+      :task-id="selectedTaskId"
+      @close="closeTaskDetails"
+      @updated="closeTaskDetails"
+      @delete="closeTaskDetails"
+    />
   </div>
 </template>
 
@@ -104,6 +113,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import projectsApi from '../../services/projects'
+import TaskDetailsModal from '../Tasks/TaskDetailsModal.vue'
 
 const props = defineProps({
   projectId: Number
@@ -114,6 +124,8 @@ const emit = defineEmits(['close', 'updated'])
 const router = useRouter()
 const project = ref(null)
 const loading = ref(true)
+const selectedTaskId = ref(null)
+const showTaskDetails = ref(false)
 
 const loadProject = async () => {
   try {
@@ -140,8 +152,14 @@ const goToTasks = () => {
 }
 
 const openTask = (taskId) => {
-  emit('close')
-  router.push(`/tasks?task=${taskId}`)
+  selectedTaskId.value = taskId
+  showTaskDetails.value = true
+}
+
+const closeTaskDetails = () => {
+  showTaskDetails.value = false
+  selectedTaskId.value = null
+  loadProject() // Перезагружаем проект для обновления данных задач
 }
 
 onMounted(() => {

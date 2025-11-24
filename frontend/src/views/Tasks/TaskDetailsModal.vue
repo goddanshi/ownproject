@@ -39,7 +39,7 @@
           <!-- Описание -->
           <div class="section">
             <h3>Описание</h3>
-            <p>{{ task.description || 'Описание отсутствует' }}</p>
+            <p class="description" v-html="formattedDescription"></p>
           </div>
 
           <!-- Проект и дедлайн -->
@@ -78,6 +78,55 @@
                   <div class="name">{{ assignee.name }} {{ assignee.surname }}</div>
                   <div class="time">⏱️ {{ formatDuration(assignee.time_spent) }}</div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TODO список -->
+          <div class="section">
+            <div class="section-header">
+              <h3>TODO ({{ task.todos?.length || 0 }})</h3>
+            </div>
+            <div class="todos-list">
+              <div
+                v-for="todo in task.todos"
+                :key="todo.id"
+                class="todo-item"
+              >
+                <input
+                  type="checkbox"
+                  :checked="todo.is_completed"
+                  @change="toggleTodo(todo.id)"
+                  class="todo-checkbox"
+                />
+                <span
+                  :class="['todo-title', { 'completed': todo.is_completed }]"
+                >
+                  {{ todo.title }}
+                </span>
+                <button
+                  @click="deleteTodo(todo.id)"
+                  class="btn-delete-todo"
+                  title="Удалить"
+                >
+                  &times;
+                </button>
+              </div>
+              <div class="todo-add">
+                <input
+                  v-model="newTodoTitle"
+                  @keyup.enter="addTodo"
+                  type="text"
+                  placeholder="Добавить TODO..."
+                  class="todo-input"
+                />
+                <button
+                  @click="addTodo"
+                  :disabled="!newTodoTitle.trim()"
+                  class="btn-add-todo"
+                >
+                  +
+                </button>
               </div>
             </div>
           </div>
@@ -133,11 +182,12 @@
       </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, inject, computed } from 'vue'
 import tasksApi from '../../services/tasks'
 import { useAuthStore } from '../../stores/auth'
 import TaskChat from '../../components/TaskChat.vue'
@@ -152,6 +202,36 @@ const authStore = useAuthStore()
 const task = ref(null)
 const loading = ref(true)
 const isTracking = ref(false)
+const newTodoTitle = ref('')
+const $confirm = inject('$confirm')
+
+// Форматирование описания с преобразованием ссылок в кликабельные элементы
+const formattedDescription = computed(() => {
+  if (!task.value?.description) {
+    return 'Описание отсутствует'
+  }
+
+  const description = task.value.description
+
+  // Регулярное выражение для поиска URL
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+
+  // Экранируем HTML, но сохраняем ссылки
+  const escapedDescription = description
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+
+  // Заменяем URL на кликабельные ссылки
+  const formatted = escapedDescription.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="description-link">${url}</a>`
+  })
+
+  // Заменяем переводы строк на <br>
+  return formatted.replace(/\n/g, '<br>')
+})
 
 const loadTask = async () => {
   try {
@@ -215,17 +295,73 @@ const editTask = () => {
 }
 
 const deleteTask = async () => {
-  if (!confirm('Вы уверены, что хотите удалить эту задачу?')) return
-
   try {
+    await $confirm({
+      title: 'Удаление задачи',
+      message: 'Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+      type: 'danger'
+    })
+
     const response = await tasksApi.deleteTask(task.value.id)
     if (response.success) {
       emit('delete')
       emit('close')
     }
+  } catch (rejected) {
+    if (rejected === false) {
+      // Пользователь отменил
+      return
+    }
+    console.error('Ошибка удаления задачи:', rejected)
+  }
+}
+
+// TODO методы
+const addTodo = async () => {
+  if (!newTodoTitle.value.trim()) return
+
+  try {
+    const response = await tasksApi.createTodo(props.taskId, newTodoTitle.value.trim())
+    if (response.success) {
+      newTodoTitle.value = ''
+      loadTask()
+    }
   } catch (error) {
-    console.error('Ошибка удаления задачи:', error)
-    alert('Ошибка удаления задачи')
+    console.error('Ошибка добавления TODO:', error)
+  }
+}
+
+const toggleTodo = async (todoId) => {
+  try {
+    await tasksApi.toggleTodo(todoId)
+    loadTask()
+  } catch (error) {
+    console.error('Ошибка переключения TODO:', error)
+  }
+}
+
+const deleteTodo = async (todoId) => {
+  try {
+    await $confirm({
+      title: 'Удаление TODO',
+      message: 'Вы уверены, что хотите удалить этот пункт?',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+      type: 'danger'
+    })
+
+    const response = await tasksApi.deleteTodo(todoId)
+    if (response.success) {
+      loadTask()
+    }
+  } catch (rejected) {
+    if (rejected === false) {
+      // Пользователь отменил
+      return
+    }
+    console.error('Ошибка удаления TODO:', rejected)
   }
 }
 
@@ -407,6 +543,24 @@ onMounted(() => {
   color: #1a1a1a;
 }
 
+.section .description {
+  margin: 0;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.description-link {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.description-link:hover {
+  color: #1d4ed8;
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -531,6 +685,118 @@ onMounted(() => {
 .tracking-date {
   color: #999;
   text-align: right;
+}
+
+/* TODO стили */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.todos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.todo-item:hover {
+  background: #f3f3f3;
+}
+
+.todo-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-title {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  transition: all 0.2s;
+}
+
+.todo-title.completed {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.btn-delete-todo {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-delete-todo:hover {
+  background: #fee2e2;
+}
+
+.todo-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.todo-input:focus {
+  outline: none;
+  border-color: #2d3748;
+}
+
+.btn-add-todo {
+  background: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-add-todo:hover:not(:disabled) {
+  background: #1a202c;
+}
+
+.btn-add-todo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Адаптивность для планшетов и мобильных */

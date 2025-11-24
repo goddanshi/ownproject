@@ -56,5 +56,14 @@ export default {
       new_password: newPassword
     })
     return response.data
+  },
+
+  // Обновить дату регистрации работника
+  async updateCreatedAt(id, createdAt) {
+    const response = await api.post('/workers/update-created-at', {
+      id,
+      created_at: createdAt
+    })
+    return response.data
   }
 }

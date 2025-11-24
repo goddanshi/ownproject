@@ -119,5 +119,39 @@ export default {
       message
     })
     return response.data
+  },
+
+  // === Методы TODO ===
+
+  // Создать TODO
+  async createTodo(taskId, title) {
+    const response = await api.post('/tasks/create-todo', {
+      task_id: taskId,
+      title
+    })
+    return response.data
+  },
+
+  // Обновить TODO
+  async updateTodo(todoId, data) {
+    const response = await api.post('/tasks/update-todo', {
+      id: todoId,
+      ...data
+    })
+    return response.data
+  },
+
+  // Переключить статус TODO
+  async toggleTodo(todoId) {
+    const response = await api.post('/tasks/toggle-todo', {
+      id: todoId
+    })
+    return response.data
+  },
+
+  // Удалить TODO
+  async deleteTodo(todoId) {
+    const response = await api.delete(`/tasks/delete-todo/${todoId}`)
+    return response.data
   }
 }

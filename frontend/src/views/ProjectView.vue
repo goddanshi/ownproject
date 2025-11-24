@@ -97,7 +97,7 @@
             v-for="task in project.tasks.slice(0, 6)"
             :key="task.id"
             class="task-card"
-            @click="openTaskModal(task)"
+            @click="openTaskDetails(task.id)"
           >
             <div class="task-header">
               <h4>{{ task.title }}</h4>
@@ -133,13 +133,23 @@
       @saved="handleProjectUpdated"
     />
 
-    <!-- Модалка задачи -->
+    <!-- Модалка задачи (редактирование) -->
     <TaskModal
       v-if="showTaskModal"
       :task="selectedTask"
       :projectId="project?.id"
       @close="closeTaskModal"
       @saved="handleTaskSaved"
+    />
+
+    <!-- Модалка детализации задачи -->
+    <TaskDetailsModal
+      v-if="showTaskDetailsModal && selectedTaskId"
+      :task-id="selectedTaskId"
+      @close="closeTaskDetailsModal"
+      @updated="loadProject"
+      @edit="handleTaskEdit"
+      @delete="handleTaskDelete"
     />
   </DashboardLayout>
 </template>
@@ -151,6 +161,7 @@ import { useAuthStore } from '../stores/auth'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import ProjectModal from './Projects/ProjectModal.vue'
 import TaskModal from './Tasks/TaskModal.vue'
+import TaskDetailsModal from './Tasks/TaskDetailsModal.vue'
 import projectsApi from '../services/projects'
 
 const route = useRoute()
@@ -162,7 +173,9 @@ const loading = ref(true)
 const error = ref('')
 const showEditModal = ref(false)
 const showTaskModal = ref(false)
+const showTaskDetailsModal = ref(false)
 const selectedTask = ref(null)
+const selectedTaskId = ref(null)
 
 const canManageProject = computed(() => {
   if (!project.value) return false
@@ -228,6 +241,27 @@ const closeTaskModal = () => {
 
 const handleTaskSaved = () => {
   closeTaskModal()
+  loadProject()
+}
+
+const openTaskDetails = (taskId) => {
+  selectedTaskId.value = taskId
+  showTaskDetailsModal.value = true
+}
+
+const closeTaskDetailsModal = () => {
+  showTaskDetailsModal.value = false
+  selectedTaskId.value = null
+}
+
+const handleTaskEdit = (task) => {
+  closeTaskDetailsModal()
+  selectedTask.value = task
+  showTaskModal.value = true
+}
+
+const handleTaskDelete = () => {
+  closeTaskDetailsModal()
   loadProject()
 }
 

@@ -39,9 +39,52 @@
               <span class="label">Фамилия</span>
               <span class="value">{{ worker.surname || '—' }}</span>
             </div>
-            <div class="info-item">
+            <div class="info-item date-edit-item">
               <span class="label">Дата регистрации</span>
-              <span class="value">{{ formatDate(worker.created_at) }}</span>
+              <div class="date-edit-container">
+                <input
+                  v-if="isEditingDate"
+                  type="datetime-local"
+                  v-model="editedDate"
+                  class="date-input"
+                  @keyup.enter="saveDate"
+                  @keyup.escape="cancelDateEdit"
+                />
+                <span v-else class="value">{{ formatDate(worker.created_at) }}</span>
+                <div class="date-actions" v-if="canEdit">
+                  <button
+                    v-if="!isEditingDate"
+                    class="btn-icon-small"
+                    @click="startDateEdit"
+                    title="Редактировать дату"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                  </button>
+                  <template v-else>
+                    <button
+                      class="btn-icon-small success"
+                      @click="saveDate"
+                      title="Сохранить"
+                      :disabled="saving"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                    </button>
+                    <button
+                      class="btn-icon-small danger"
+                      @click="cancelDateEdit"
+                      title="Отмена"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -57,8 +100,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import workersApi from '@/services/workers'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   workerId: {
@@ -69,8 +113,19 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated'])
 
+const authStore = useAuthStore()
+const $confirm = inject('$confirm')
+
 const worker = ref(null)
 const loading = ref(true)
+const isEditingDate = ref(false)
+const editedDate = ref('')
+const saving = ref(false)
+
+// Проверка прав на редактирование (только админ)
+const canEdit = computed(() => {
+  return authStore.user?.role === 1
+})
 
 // Получить метку роли
 const getRoleLabel = (role) => {
@@ -105,6 +160,17 @@ const formatDate = (timestamp) => {
   })
 }
 
+// Преобразование timestamp в формат datetime-local
+const timestampToDatetimeLocal = (timestamp) => {
+  const date = new Date(timestamp * 1000)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 // Загрузка работника
 const loadWorker = async () => {
   loading.value = true
@@ -117,6 +183,58 @@ const loadWorker = async () => {
     console.error('Failed to load worker:', error)
   } finally {
     loading.value = false
+  }
+}
+
+// Начать редактирование даты
+const startDateEdit = () => {
+  editedDate.value = timestampToDatetimeLocal(worker.value.created_at)
+  isEditingDate.value = true
+}
+
+// Отменить редактирование даты
+const cancelDateEdit = () => {
+  isEditingDate.value = false
+  editedDate.value = ''
+}
+
+// Сохранить дату
+const saveDate = async () => {
+  if (!editedDate.value) {
+    return
+  }
+
+  try {
+    const confirmed = await $confirm({
+      title: 'Изменить дату регистрации?',
+      message: 'Вы уверены, что хотите изменить дату регистрации этого пользователя?',
+      type: 'warning',
+      confirmText: 'Изменить',
+      cancelText: 'Отмена'
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    saving.value = true
+    const result = await workersApi.updateCreatedAt(props.workerId, editedDate.value)
+
+    if (result.success) {
+      worker.value.created_at = result.created_at
+      isEditingDate.value = false
+      editedDate.value = ''
+      emit('updated')
+    } else {
+      alert(result.message || 'Ошибка при обновлении даты регистрации')
+    }
+  } catch (error) {
+    if (error !== false) {
+      console.error('Failed to update created_at:', error)
+      alert('Произошла ошибка при обновлении даты регистрации')
+    }
+  } finally {
+    saving.value = false
   }
 }
 
@@ -322,6 +440,86 @@ onMounted(() => {
   font-size: 0.95rem;
   color: #1a1a1a;
   font-weight: 500;
+}
+
+.date-edit-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.date-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.date-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #2d3748;
+  box-shadow: 0 0 0 3px rgba(45, 55, 72, 0.1);
+}
+
+.date-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon-small {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon-small:not(:disabled):hover {
+  background: #2d3748;
+  border-color: #2d3748;
+}
+
+.btn-icon-small:not(:disabled):hover svg {
+  color: white;
+}
+
+.btn-icon-small.success:not(:disabled):hover {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.btn-icon-small.danger:not(:disabled):hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-icon-small svg {
+  width: 14px;
+  height: 14px;
+  color: #666;
+  transition: color 0.2s ease;
 }
 
 .modal-footer {

@@ -287,6 +287,57 @@ class WorkersController extends Controller
         ];
     }
 
+    // Изменить дату регистрации работника
+    public function actionUpdateCreatedAt()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        // Только админ может менять дату регистрации
+        if ($user->role != User::ROLE_ADMIN) {
+            return ['success' => false, 'message' => 'Access denied'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $id = $data['id'] ?? null;
+        $createdAt = $data['created_at'] ?? null;
+
+        if (!$createdAt) {
+            return ['success' => false, 'message' => 'Дата регистрации обязательна'];
+        }
+
+        $worker = User::findOne($id);
+        if (!$worker) {
+            return ['success' => false, 'message' => 'Работник не найден'];
+        }
+
+        // Преобразуем строку даты в timestamp
+        $timestamp = strtotime($createdAt);
+        if ($timestamp === false) {
+            return ['success' => false, 'message' => 'Неверный формат даты'];
+        }
+
+        $worker->created_at = $timestamp;
+        $worker->updated_at = time();
+
+        if ($worker->save(false)) {
+            return [
+                'success' => true,
+                'message' => 'Дата регистрации успешно обновлена',
+                'created_at' => $worker->created_at
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка обновления даты регистрации'
+        ];
+    }
+
     // === Вспомогательные методы ===
 
     private function getAuthenticatedUser()

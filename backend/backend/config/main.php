@@ -109,6 +109,23 @@ return [
                 'POST tasks/unassign-user' => 'tasks/unassign-user',
                 'POST tasks/start-tracking' => 'tasks/start-tracking',
                 'POST tasks/stop-tracking' => 'tasks/stop-tracking',
+
+                // TODO routes
+                'POST tasks/create-todo' => 'tasks/create-todo',
+                'POST tasks/update-todo' => 'tasks/update-todo',
+                'POST tasks/toggle-todo' => 'tasks/toggle-todo',
+                'DELETE tasks/delete-todo/<id:\d+>' => 'tasks/delete-todo',
+
+                // --------------------------------
+                // Workers routes
+                'OPTIONS workers/<action>' => 'workers/options',
+                'GET workers' => 'workers/index',
+                'GET workers/<id:\d+>' => 'workers/view',
+                'POST workers/create' => 'workers/create',
+                'POST workers/update' => 'workers/update',
+                'DELETE workers/<id:\d+>' => 'workers/delete',
+                'POST workers/change-password' => 'workers/change-password',
+                'POST workers/update-created-at' => 'workers/update-created-at',
             ],
         ],
         'request' => [

@@ -109,6 +109,13 @@ class Task extends ActiveRecord
         return $this->hasMany(TimeTracking::class, ['task_id' => 'id']);
     }
 
+    // Связь с TODO элементами
+    public function getTodos()
+    {
+        return $this->hasMany(TaskTodo::class, ['task_id' => 'id'])
+            ->orderBy(['position' => SORT_ASC]);
+    }
+
     // Получить общее время выполнения задачи
     public function getTotalTime()
     {

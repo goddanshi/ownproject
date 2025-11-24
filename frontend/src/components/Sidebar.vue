@@ -9,7 +9,7 @@
 
       <div class="sidebar-logo">
         <transition name="fade">
-          <span v-if="!isCollapsed" class="logo-text">CRM System</span>
+          <span v-if="!isCollapsed" class="logo-text">Бамбук и Панды</span>
           <span v-else class="logo-short">CRM</span>
         </transition>
       </div>

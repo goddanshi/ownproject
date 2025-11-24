@@ -12,6 +12,7 @@ use common\models\Task;
 use common\models\Project;
 use common\models\TimeTracking;
 use common\models\TaskMessage;
+use common\models\TaskTodo;
 
 class TasksController extends Controller
 {
@@ -194,6 +195,17 @@ class TasksController extends Controller
             ];
         }
 
+        $todos = [];
+        foreach ($task->todos as $todo) {
+            $todos[] = [
+                'id' => $todo->id,
+                'title' => $todo->title,
+                'is_completed' => (bool)$todo->is_completed,
+                'position' => $todo->position,
+                'created_at' => $todo->created_at,
+            ];
+        }
+
         return [
             'success' => true,
             'task' => [
@@ -217,6 +229,7 @@ class TasksController extends Controller
                 ],
                 'assignees' => $assignees,
                 'time_trackings' => $timeTrackings,
+                'todos' => $todos,
                 'total_time' => $task->getTotalTime(),
                 'created_at' => $task->created_at,
                 'updated_at' => $task->updated_at,
@@ -624,6 +637,180 @@ class TasksController extends Controller
             'success' => false,
             'message' => 'Ошибка отправки сообщения'
         ];
+    }
+
+    // === Методы для работы с TODO ===
+
+    /**
+     * Создать TODO элемент
+     */
+    public function actionCreateTodo()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $taskId = $data['task_id'] ?? null;
+        $title = $data['title'] ?? null;
+
+        if (!$taskId || !$title) {
+            return ['success' => false, 'message' => 'task_id и title обязательны'];
+        }
+
+        $task = Task::findOne($taskId);
+        if (!$task) {
+            return ['success' => false, 'message' => 'Задача не найдена'];
+        }
+
+        $todo = new TaskTodo();
+        $todo->task_id = $taskId;
+        $todo->title = trim($title);
+        $todo->position = TaskTodo::getNextPosition($taskId);
+        $todo->is_completed = false;
+
+        if ($todo->save()) {
+            return [
+                'success' => true,
+                'todo' => [
+                    'id' => $todo->id,
+                    'title' => $todo->title,
+                    'is_completed' => (bool)$todo->is_completed,
+                    'position' => $todo->position,
+                    'created_at' => $todo->created_at,
+                ]
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка создания TODO',
+            'errors' => $todo->errors
+        ];
+    }
+
+    /**
+     * Обновить TODO элемент
+     */
+    public function actionUpdateTodo()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $todoId = $data['id'] ?? null;
+
+        if (!$todoId) {
+            return ['success' => false, 'message' => 'id обязателен'];
+        }
+
+        $todo = TaskTodo::findOne($todoId);
+        if (!$todo) {
+            return ['success' => false, 'message' => 'TODO не найдено'];
+        }
+
+        if (isset($data['title'])) {
+            $todo->title = trim($data['title']);
+        }
+
+        if (isset($data['is_completed'])) {
+            $todo->is_completed = (bool)$data['is_completed'];
+        }
+
+        if ($todo->save()) {
+            return [
+                'success' => true,
+                'todo' => [
+                    'id' => $todo->id,
+                    'title' => $todo->title,
+                    'is_completed' => (bool)$todo->is_completed,
+                    'position' => $todo->position,
+                ]
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка обновления TODO',
+            'errors' => $todo->errors
+        ];
+    }
+
+    /**
+     * Переключить статус выполнения TODO
+     */
+    public function actionToggleTodo()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $todoId = $data['id'] ?? null;
+
+        if (!$todoId) {
+            return ['success' => false, 'message' => 'id обязателен'];
+        }
+
+        $todo = TaskTodo::findOne($todoId);
+        if (!$todo) {
+            return ['success' => false, 'message' => 'TODO не найдено'];
+        }
+
+        if ($todo->toggleCompleted()) {
+            return [
+                'success' => true,
+                'todo' => [
+                    'id' => $todo->id,
+                    'is_completed' => (bool)$todo->is_completed,
+                ]
+            ];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка переключения статуса'];
+    }
+
+    /**
+     * Удалить TODO элемент
+     */
+    public function actionDeleteTodo()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $todoId = Yii::$app->request->get('id');
+
+        if (!$todoId) {
+            return ['success' => false, 'message' => 'id обязателен'];
+        }
+
+        $todo = TaskTodo::findOne($todoId);
+        if (!$todo) {
+            return ['success' => false, 'message' => 'TODO не найдено'];
+        }
+
+        if ($todo->delete()) {
+            return [
+                'success' => true,
+                'message' => 'TODO удалено'
+            ];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка удаления TODO'];
     }
 
     // === Вспомогательные методы ===
