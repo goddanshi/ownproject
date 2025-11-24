@@ -21,6 +21,7 @@ class UserController extends Controller
                 'Origin' => [
                     'http://185.213.240.236',
                     'http://localhost:5173',
+                    'http://185.104.113.132',
                     'http://127.0.0.1:5173'
                 ],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
