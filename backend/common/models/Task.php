@@ -15,6 +15,7 @@ use yii\behaviors\TimestampBehavior;
  * @property int $project_id
  * @property int $status
  * @property int $priority
+ * @property int $start_date
  * @property int $deadline
  * @property int $created_at
  * @property int $updated_at
@@ -52,7 +53,7 @@ class Task extends ActiveRecord
             [['title', 'project_id', 'created_by'], 'required'],
             ['title', 'string', 'max' => 255],
             ['description', 'string'],
-            [['project_id', 'status', 'priority', 'deadline', 'created_by'], 'integer'],
+            [['project_id', 'status', 'priority', 'start_date', 'deadline', 'created_by'], 'integer'],
             ['project_id', 'exist', 'targetClass' => Project::class, 'targetAttribute' => 'id'],
             ['created_by', 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
             ['status', 'default', 'value' => self::STATUS_TODO],
@@ -71,6 +72,7 @@ class Task extends ActiveRecord
             'project_id' => 'Проект',
             'status' => 'Статус',
             'priority' => 'Приоритет',
+            'start_date' => 'Дата начала',
             'deadline' => 'Дедлайн',
             'created_at' => 'Дата создания',
             'updated_at' => 'Обновлено',

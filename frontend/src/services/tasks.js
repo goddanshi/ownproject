@@ -27,6 +27,7 @@ export default {
       project_id: taskData.projectId,
       status: taskData.status,
       priority: taskData.priority,
+      start_date: taskData.start_date,
       deadline: taskData.deadline,
       assignee_ids: taskData.assigneeIds || []
     })
@@ -41,7 +42,9 @@ export default {
       description: taskData.description,
       status: taskData.status,
       priority: taskData.priority,
-      deadline: taskData.deadline
+      start_date: taskData.start_date,
+      deadline: taskData.deadline,
+      reviewer_id: taskData.reviewer_id
     })
     return response.data
   },

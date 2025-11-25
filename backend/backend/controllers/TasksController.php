@@ -76,6 +76,7 @@ class TasksController extends Controller
                 'status_label' => $task->getStatusLabel(),
                 'priority' => $task->priority,
                 'priority_label' => $task->getPriorityLabel(),
+                'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
                 'project' => [
                     'id' => $task->project->id,
@@ -130,6 +131,7 @@ class TasksController extends Controller
                 'status_label' => $task->getStatusLabel(),
                 'priority' => $task->priority,
                 'priority_label' => $task->getPriorityLabel(),
+                'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
                 'project' => [
                     'id' => $task->project->id,
@@ -216,6 +218,7 @@ class TasksController extends Controller
                 'status_label' => $task->getStatusLabel(),
                 'priority' => $task->priority,
                 'priority_label' => $task->getPriorityLabel(),
+                'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
                 'project' => [
                     'id' => $task->project->id,
@@ -263,6 +266,7 @@ class TasksController extends Controller
         $task->project_id = $projectId;
         $task->status = $data['status'] ?? Task::STATUS_TODO;
         $task->priority = $data['priority'] ?? Task::PRIORITY_MEDIUM;
+        $task->start_date = $data['start_date'] ?? null;
         $task->deadline = $data['deadline'] ?? null;
         $task->created_by = $user->id;
 
@@ -309,11 +313,16 @@ class TasksController extends Controller
             return ['success' => false, 'message' => 'Задача не найдена'];
         }
 
+        // Сохраняем старые значения для логирования
+        $oldStatus = $task->status;
+        $oldPriority = $task->priority;
+        $oldDeadline = $task->deadline;
 
         $task->title = $data['title'] ?? $task->title;
         $task->description = $data['description'] ?? $task->description;
         $task->status = $data['status'] ?? $task->status;
         $task->priority = $data['priority'] ?? $task->priority;
+        $task->start_date = $data['start_date'] ?? $task->start_date;
         $task->deadline = $data['deadline'] ?? $task->deadline;
 
         if (!$task->save()) {
@@ -322,6 +331,34 @@ class TasksController extends Controller
                 'message' => 'Ошибка обновления задачи',
                 'errors' => $task->errors
             ];
+        }
+
+        // Создаем системные сообщения о изменениях
+        if ($oldStatus != $task->status) {
+            $statusChangeData = [
+                'old_status' => $oldStatus,
+                'new_status' => $task->status,
+            ];
+
+            // Добавляем ID проверяющего если задача отправлена на проверку
+            if ($task->status == Task::STATUS_REVIEW && !empty($data['reviewer_id'])) {
+                $statusChangeData['reviewer_id'] = $data['reviewer_id'];
+            }
+
+            TaskMessage::createSystemMessage($task->id, $user->id, 'status_changed', $statusChangeData);
+        }
+
+        if ($oldPriority != $task->priority) {
+            TaskMessage::createSystemMessage($task->id, $user->id, 'priority_changed', [
+                'old_priority' => $oldPriority,
+                'new_priority' => $task->priority,
+            ]);
+        }
+
+        if ($oldDeadline != $task->deadline) {
+            TaskMessage::createSystemMessage($task->id, $user->id, 'deadline_changed', [
+                'new_deadline' => $task->deadline,
+            ]);
         }
 
         return [
@@ -381,6 +418,11 @@ class TasksController extends Controller
         }
 
         if ($task->assignToUser($userId)) {
+            // Создаем системное сообщение о назначении
+            TaskMessage::createSystemMessage($taskId, $user->id, 'assignee_added', [
+                'assignee_id' => $userId,
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Пользователь назначен на задачу'
@@ -413,6 +455,11 @@ class TasksController extends Controller
         }
 
         if ($task->unassignFromUser($userId)) {
+            // Создаем системное сообщение об удалении назначения
+            TaskMessage::createSystemMessage($taskId, $user->id, 'assignee_removed', [
+                'assignee_id' => $userId,
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Пользователь снят с задачи'
@@ -447,6 +494,9 @@ class TasksController extends Controller
         $tracking = TimeTracking::startTracking($taskId, $user->id, $description);
 
         if ($tracking) {
+            // Создаем системное сообщение о начале отслеживания
+            TaskMessage::createSystemMessage($taskId, $user->id, 'tracking_started');
+
             return [
                 'success' => true,
                 'message' => 'Отслеживание времени начато',
@@ -488,6 +538,11 @@ class TasksController extends Controller
         }
 
         if ($tracking->stopTracking()) {
+            // Создаем системное сообщение об окончании отслеживания
+            TaskMessage::createSystemMessage($taskId, $user->id, 'tracking_stopped', [
+                'duration' => $tracking->duration,
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Отслеживание времени остановлено',

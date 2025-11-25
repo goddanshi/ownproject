@@ -65,8 +65,14 @@
               {{ task.priority_label }}
             </span>
             <span class="project-name">{{ task.project.name }}</span>
-            <span v-if="task.deadline" class="deadline">
-              ⏰ {{ formatDate(task.deadline) }}
+          </div>
+
+          <div class="task-dates" v-if="task.start_date || task.deadline">
+            <span v-if="shouldShowStartDate(task)" class="start-date">
+              Начало: {{ formatDate(task.start_date) }}
+            </span>
+            <span v-else class="deadline">
+              Дедлайн: {{ formatDate(task.deadline) }}
             </span>
           </div>
 
@@ -126,12 +132,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import TaskModal from './Tasks/TaskModal.vue'
 import TaskDetailsModal from './Tasks/TaskDetailsModal.vue'
 import tasksApi from '../services/tasks'
 import projectsApi from '../services/projects'
+import { useTaskEvents } from '../composables/useTaskEvents'
 
 const tasks = ref([])
 const projects = ref([])
@@ -142,6 +149,8 @@ const selectedTask = ref(null)
 const selectedTaskId = ref(null)
 const selectedProject = ref('')
 const selectedStatus = ref('')
+const { onTaskEvent } = useTaskEvents()
+let unsubscribe = null
 
 // Отфильтрованные задачи
 const filteredTasks = computed(() => {
@@ -220,6 +229,13 @@ const handleDeleteTask = () => {
   loadTasks()
 }
 
+// Логика отображения даты
+const shouldShowStartDate = (task) => {
+  if (!task.start_date) return false
+  const now = Math.floor(Date.now() / 1000)
+  return now < task.start_date
+}
+
 // Форматирование
 const formatDate = (timestamp) => {
   const date = new Date(timestamp * 1000)
@@ -235,6 +251,40 @@ const formatDuration = (seconds) => {
 onMounted(() => {
   loadTasks()
   loadProjects()
+
+  // Подписываемся на все изменения задач
+  unsubscribe = onTaskEvent('*', (event) => {
+    const { taskId, type, data } = event
+
+    // Находим задачу в списке
+    const taskIndex = tasks.value.findIndex(t => t.id === taskId)
+    if (taskIndex !== -1) {
+      const task = tasks.value[taskIndex]
+
+      // Обновляем статус задачи локально без перезагрузки
+      if (type === 'status_changed' && data.newStatus) {
+        task.status = data.newStatus
+
+        // Обновляем метку статуса
+        const statusLabels = {
+          1: 'К выполнению',
+          2: 'В работе',
+          3: 'На проверке',
+          4: 'Выполнено'
+        }
+        task.status_label = statusLabels[data.newStatus]
+      }
+
+      // Принудительно обновляем реактивность
+      tasks.value = [...tasks.value]
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe()
+  }
 })
 </script>
 
@@ -406,9 +456,30 @@ onMounted(() => {
   color: #666;
 }
 
+.task-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #2d3748;
+}
+
+.start-date,
 .deadline {
   font-size: 0.85rem;
-  color: #666;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.start-date {
+  color: #059669;
+}
+
+.deadline {
+  color: #dc2626;
 }
 
 .task-footer {

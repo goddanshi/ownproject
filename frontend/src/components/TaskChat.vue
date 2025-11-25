@@ -19,18 +19,32 @@
         <div
           v-for="message in messages"
           :key="message.id"
-          :class="['message', { 'own-message': message.user.id === currentUserId }]"
+          :class="[
+            'message',
+            { 'own-message': message.user.id === currentUserId && !message.is_system },
+            { 'system-message': message.is_system }
+          ]"
         >
-          <div class="message-avatar">
-            {{ message.user.username[0].toUpperCase() }}
+          <!-- Системное сообщение -->
+          <div v-if="message.is_system" class="system-message-content">
+            <div class="system-message-icon">i</div>
+            <div class="system-message-text">{{ message.message }}</div>
+            <span class="system-message-time">{{ formatTime(message.created_at) }}</span>
           </div>
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-author">{{ message.user.name }} {{ message.user.surname }}</span>
-              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+
+          <!-- Обычное сообщение -->
+          <template v-else>
+            <div class="message-avatar">
+              {{ message.user.username[0].toUpperCase() }}
             </div>
-            <div class="message-text" v-html="formatMessage(message.message)"></div>
-          </div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-author">{{ message.user.name }} {{ message.user.surname }}</span>
+                <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              </div>
+              <div class="message-text" v-html="formatMessage(message.message)"></div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -61,6 +75,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import tasksApi from '../services/tasks'
 import { useAuthStore } from '../stores/auth'
+import { useTaskEvents } from '../composables/useTaskEvents'
 
 const props = defineProps({
   taskId: {
@@ -71,6 +86,7 @@ const props = defineProps({
 
 const authStore = useAuthStore()
 const currentUserId = authStore.user?.id
+const { onTaskEvent } = useTaskEvents()
 
 const messages = ref([])
 const newMessage = ref('')
@@ -80,6 +96,7 @@ const messagesContainer = ref(null)
 
 let pollingActive = false
 let pollingTimeout = null
+let unsubscribe = null
 
 // Загрузка всех сообщений при открытии
 const loadAllMessages = async () => {
@@ -202,6 +219,31 @@ onMounted(async () => {
   await loadAllMessages()
   pollingActive = true
   pollNewMessages()
+
+  // Подписываемся на события задачи для мгновенного обновления
+  unsubscribe = onTaskEvent(props.taskId, async (event) => {
+    // При любом событии задачи принудительно запрашиваем новые сообщения
+    // чтобы увидеть системное сообщение
+    const lastMessageId = messages.value.length > 0
+      ? messages.value[messages.value.length - 1].id
+      : null
+
+    try {
+      const response = await tasksApi.getChatMessages(props.taskId, lastMessageId, 1)
+      if (response.success && response.messages.length > 0) {
+        const existingIds = new Set(messages.value.map(m => m.id))
+        const newMessages = response.messages.filter(m => !existingIds.has(m.id))
+
+        if (newMessages.length > 0) {
+          messages.value.push(...newMessages)
+          await nextTick()
+          scrollToBottom()
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка получения новых сообщений:', error)
+    }
+  })
 })
 
 // Остановка polling при размонтировании
@@ -209,6 +251,9 @@ onUnmounted(() => {
   pollingActive = false
   if (pollingTimeout) {
     clearTimeout(pollingTimeout)
+  }
+  if (unsubscribe) {
+    unsubscribe()
   }
 })
 </script>
@@ -430,5 +475,42 @@ onUnmounted(() => {
 .send-button svg {
   width: 20px;
   height: 20px;
+}
+
+/* Системные сообщения */
+.system-message {
+  display: flex !important;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.system-message-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  max-width: 80%;
+  border-left: 3px solid #3b82f6;
+}
+
+.system-message-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.system-message-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.system-message-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
 }
 </style>

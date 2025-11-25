@@ -183,8 +183,28 @@ const loadProfiles = async () => {
   }
 }
 
+const loadTasks = async () => {
+  try {
+    const result = await tasksApi.getTasks()
+
+    if (result.success) {
+      tasks.value = Array.isArray(result.tasks) ? result.tasks : []
+      // Фильтруем активные задачи (статус 1 - Новая, 2 - В работе, 3 - На проверке)
+      activeTasks.value = tasks.value.filter(task => [1, 2, 3].includes(task.status))
+    } else {
+      tasks.value = []
+      activeTasks.value = []
+    }
+  } catch (error) {
+    console.error('Failed to load tasks:', error)
+    tasks.value = []
+    activeTasks.value = []
+  }
+}
+
 onMounted(() => {
   loadProfiles()
+  loadTasks()
 })
 </script>
 

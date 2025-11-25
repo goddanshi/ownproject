@@ -27,13 +27,35 @@
         <div class="modal-body">
           <div class="task-details">
           <!-- Статус и приоритет -->
-          <div class="status-row">
-            <span :class="['status-badge', `status-${task.status}`]">
-              {{ task.status_label }}
-            </span>
-            <span :class="['priority-badge', `priority-${task.priority}`]">
-              {{ task.priority_label }}
-            </span>
+          <div class="status-row" style="justify-content: space-between;">
+            <div class="status-control">
+              <label>Статус:</label>
+              <select v-model="selectedStatus" @change="handleStatusChange" class="status-select">
+                <option value="1">К выполнению</option>
+                <option value="2">В работе</option>
+                <option value="3">На проверке</option>
+                <option value="4">Выполнено</option>
+              </select>
+              <span :class="['priority-badge', `priority-${task.priority}`]">
+                {{ task.priority_label }}
+              </span>
+            </div>
+            <div class="time-tracking">
+              <button style="height: 50px;"
+                v-if="!isTracking"
+                @click="startTracking"
+                class="btn-primary"
+              >
+                ▶ Начать отслеживание
+              </button>
+              <button
+                v-else
+                @click="stopTracking"
+                class="btn-danger"
+              >
+                ⏸ Остановить отслеживание
+              </button>
+            </div>
           </div>
 
           <!-- Описание -->
@@ -132,7 +154,7 @@
           </div>
 
           <!-- Отслеживание времени -->
-          <div class="section">
+          <!-- <div class="section">
             <h3>Отслеживание времени</h3>
             <div class="time-tracking">
               <button
@@ -150,7 +172,7 @@
                 ⏸ Остановить отслеживание
               </button>
             </div>
-          </div>
+          </div> -->
 
           <!-- История отслеживания -->
           <div class="section" v-if="task.time_trackings.length > 0">
@@ -183,6 +205,37 @@
       </div>
     </div>
 
+    <!-- Модалка выбора проверяющего -->
+    <div v-if="showReviewerModal" class="reviewer-modal-overlay" @click.self="cancelReviewerSelection">
+      <div class="reviewer-modal">
+        <h3>Выберите проверяющего</h3>
+        <p class="reviewer-hint">Кто будет проверять эту задачу?</p>
+        <div class="reviewers-list">
+          <label
+            v-for="assignee in task.assignees"
+            :key="assignee.id"
+            class="reviewer-option"
+          >
+            <input
+              type="radio"
+              name="reviewer"
+              :value="assignee.id"
+              v-model="selectedReviewerId"
+            />
+            <div class="reviewer-info">
+              <div class="avatar-small">{{ assignee.username[0].toUpperCase() }}</div>
+              <span>{{ assignee.name }} {{ assignee.surname }}</span>
+            </div>
+          </label>
+        </div>
+        <div class="reviewer-actions">
+          <button class="btn-secondary" @click="cancelReviewerSelection">Отмена</button>
+          <button class="btn-primary" @click="confirmReviewerSelection" :disabled="!selectedReviewerId">
+            Отправить на проверку
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -191,6 +244,7 @@ import { ref, onMounted, inject, computed } from 'vue'
 import tasksApi from '../../services/tasks'
 import { useAuthStore } from '../../stores/auth'
 import TaskChat from '../../components/TaskChat.vue'
+import { useTaskEvents } from '../../composables/useTaskEvents'
 
 const props = defineProps({
   taskId: Number
@@ -204,6 +258,11 @@ const loading = ref(true)
 const isTracking = ref(false)
 const newTodoTitle = ref('')
 const $confirm = inject('$confirm')
+const selectedStatus = ref('1')
+const showReviewerModal = ref(false)
+const selectedReviewerId = ref(null)
+const pendingStatus = ref(null)
+const { emitTaskEvent } = useTaskEvents()
 
 // Форматирование описания с преобразованием ссылок в кликабельные элементы
 const formattedDescription = computed(() => {
@@ -239,6 +298,7 @@ const loadTask = async () => {
     const response = await tasksApi.getTask(props.taskId)
     if (response.success) {
       task.value = response.task
+      selectedStatus.value = String(task.value.status)
       // Проверка активного отслеживания
       checkActiveTracking()
     }
@@ -261,6 +321,12 @@ const startTracking = async () => {
   try {
     await tasksApi.startTracking(props.taskId)
     isTracking.value = true
+
+    // Эмитим событие для обновления чата
+    emitTaskEvent(props.taskId, 'tracking_started', {
+      userId: authStore.user?.id
+    })
+
     loadTask()
   } catch (error) {
     console.error('Ошибка начала отслеживания:', error)
@@ -269,8 +335,15 @@ const startTracking = async () => {
 
 const stopTracking = async () => {
   try {
-    await tasksApi.stopTracking(props.taskId)
+    const response = await tasksApi.stopTracking(props.taskId)
     isTracking.value = false
+
+    // Эмитим событие для обновления чата
+    emitTaskEvent(props.taskId, 'tracking_stopped', {
+      userId: authStore.user?.id,
+      duration: response.tracking?.duration
+    })
+
     loadTask()
     emit('updated')
   } catch (error) {
@@ -288,6 +361,76 @@ const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   return `${hours}ч ${minutes}м`
+}
+
+const handleStatusChange = async () => {
+  const newStatus = parseInt(selectedStatus.value)
+
+  // Если статус меняется на "На проверке" (3) и есть участники
+  if (newStatus === 3 && task.value.assignees.length > 0) {
+    pendingStatus.value = newStatus
+    showReviewerModal.value = true
+    return
+  }
+
+  // Для остальных статусов сразу обновляем
+  await updateTaskStatus(newStatus)
+}
+
+const updateTaskStatus = async (status, reviewerId = null) => {
+  try {
+    const oldStatus = task.value.status
+
+    const updateData = {
+      title: task.value.title,
+      description: task.value.description,
+      status: status,
+      priority: task.value.priority,
+      start_date: task.value.start_date,
+      deadline: task.value.deadline
+    }
+
+    // Добавляем ID проверяющего если он указан
+    if (reviewerId) {
+      updateData.reviewer_id = reviewerId
+    }
+
+    await tasksApi.updateTask(task.value.id, updateData)
+
+    // Обновляем локальное состояние без полной перезагрузки
+    task.value.status = status
+
+    // Эмитим событие для обновления других компонентов
+    emitTaskEvent(task.value.id, 'status_changed', {
+      oldStatus,
+      newStatus: status,
+      reviewerId
+    })
+
+    emit('updated')
+  } catch (error) {
+    console.error('Ошибка обновления статуса:', error)
+    // Откатываем выбор если ошибка
+    selectedStatus.value = String(task.value.status)
+  }
+}
+
+const cancelReviewerSelection = () => {
+  showReviewerModal.value = false
+  selectedReviewerId.value = null
+  pendingStatus.value = null
+  // Откатываем статус
+  selectedStatus.value = String(task.value.status)
+}
+
+const confirmReviewerSelection = async () => {
+  if (!selectedReviewerId.value) return
+
+  // Передаем ID проверяющего в updateTaskStatus
+  await updateTaskStatus(pendingStatus.value, selectedReviewerId.value)
+  showReviewerModal.value = false
+  selectedReviewerId.value = null
+  pendingStatus.value = null
 }
 
 const editTask = () => {
@@ -546,7 +689,7 @@ onMounted(() => {
 .section .description {
   margin: 0;
   line-height: 1.6;
-  color: #4b5563;
+  /* color: #4b5563; */
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -799,6 +942,151 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+/* Стили для контроля статуса */
+.status-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-control label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.status-select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.status-select:hover {
+  border-color: #2d3748;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #2d3748;
+  box-shadow: 0 0 0 3px rgba(45, 55, 72, 0.1);
+}
+
+/* Модалка выбора проверяющего */
+.reviewer-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.reviewer-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.reviewer-modal h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #1a1a1a;
+}
+
+.reviewer-hint {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.reviewers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.reviewer-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reviewer-option:hover {
+  border-color: #2d3748;
+  background: #f9fafb;
+}
+
+.reviewer-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.reviewer-option input[type="radio"]:checked + .reviewer-info {
+  font-weight: 600;
+}
+
+.reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.avatar-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2d3748;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.reviewer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #f9f9f9;
+}
+
 /* Адаптивность для планшетов и мобильных */
 @media (max-width: 1024px) {
   .modal-content {
@@ -823,6 +1111,11 @@ onMounted(() => {
 
   .modal-content {
     max-height: 95vh;
+  }
+
+  .reviewer-modal {
+    padding: 1.5rem;
+    max-width: 95%;
   }
 }
 </style>

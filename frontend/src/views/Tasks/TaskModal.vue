@@ -62,12 +62,22 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Дедлайн</label>
-          <input
-            v-model="formData.deadline"
-            type="date"
-          />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Дата начала</label>
+            <input
+              v-model="formData.startDate"
+              type="date"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Дедлайн</label>
+            <input
+              v-model="formData.deadline"
+              type="date"
+            />
+          </div>
         </div>
 
         <div class="form-group" v-if="!task && projectParticipants.length > 0">
@@ -122,6 +132,7 @@ const formData = ref({
   projectId: '',
   status: '1',
   priority: '2',
+  startDate: '',
   deadline: '',
   assigneeIds: []
 })
@@ -136,6 +147,10 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
 
+    const startDate = formData.value.startDate
+      ? Math.floor(new Date(formData.value.startDate).getTime() / 1000)
+      : null
+
     const deadline = formData.value.deadline
       ? Math.floor(new Date(formData.value.deadline).getTime() / 1000)
       : null
@@ -146,6 +161,7 @@ const handleSubmit = async () => {
         description: formData.value.description,
         status: parseInt(formData.value.status),
         priority: parseInt(formData.value.priority),
+        start_date: startDate,
         deadline
       })
     } else {
@@ -155,6 +171,7 @@ const handleSubmit = async () => {
         projectId: parseInt(formData.value.projectId),
         status: parseInt(formData.value.status),
         priority: parseInt(formData.value.priority),
+        start_date: startDate,
         deadline,
         assigneeIds: formData.value.assigneeIds
       })
@@ -210,6 +227,9 @@ onMounted(async () => {
       projectId: props.task.project?.id || props.task.project_id,
       status: String(props.task.status),
       priority: String(props.task.priority),
+      startDate: props.task.start_date
+        ? new Date(props.task.start_date * 1000).toISOString().split('T')[0]
+        : '',
       deadline: props.task.deadline
         ? new Date(props.task.deadline * 1000).toISOString().split('T')[0]
         : '',

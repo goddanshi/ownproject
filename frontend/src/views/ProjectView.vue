@@ -110,8 +110,13 @@
               <span :class="['priority-badge', `priority-${task.priority}`]">
                 {{ getPriorityLabel(task.priority) }}
               </span>
-              <span v-if="task.deadline" class="deadline">
-                ⏰ {{ formatDate(task.deadline) }}
+            </div>
+            <div class="task-dates" v-if="task.start_date || task.deadline">
+              <span v-if="shouldShowStartDate(task)" class="start-date">
+                Начало: {{ formatDate(task.start_date) }}
+              </span>
+              <span v-else class="deadline">
+                Дедлайн: {{ formatDate(task.deadline) }}
               </span>
             </div>
           </div>
@@ -147,7 +152,6 @@
       v-if="showTaskDetailsModal && selectedTaskId"
       :task-id="selectedTaskId"
       @close="closeTaskDetailsModal"
-      @updated="loadProject"
       @edit="handleTaskEdit"
       @delete="handleTaskDelete"
     />
@@ -155,9 +159,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useTaskEvents } from '../composables/useTaskEvents'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import ProjectModal from './Projects/ProjectModal.vue'
 import TaskModal from './Tasks/TaskModal.vue'
@@ -167,6 +172,7 @@ import projectsApi from '../services/projects'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { onTaskEvent } = useTaskEvents()
 
 const project = ref(null)
 const loading = ref(true)
@@ -176,6 +182,8 @@ const showTaskModal = ref(false)
 const showTaskDetailsModal = ref(false)
 const selectedTask = ref(null)
 const selectedTaskId = ref(null)
+
+let unsubscribe = null
 
 const canManageProject = computed(() => {
   if (!project.value) return false
@@ -265,6 +273,12 @@ const handleTaskDelete = () => {
   loadProject()
 }
 
+const shouldShowStartDate = (task) => {
+  if (!task.start_date) return false
+  const now = Math.floor(Date.now() / 1000)
+  return now < task.start_date
+}
+
 const formatDate = (timestamp) => {
   if (!timestamp) return ''
   const date = new Date(timestamp * 1000)
@@ -302,6 +316,29 @@ watch(() => route.params.id, (newId, oldId) => {
 
 onMounted(() => {
   loadProject()
+
+  // Подписываемся на события задач для обновления без перезагрузки
+  unsubscribe = onTaskEvent('*', (event) => {
+    if (!project.value?.tasks) return
+
+    const { taskId, type, data } = event
+    const taskIndex = project.value.tasks.findIndex(t => t.id === taskId)
+
+    if (taskIndex === -1) return
+
+    // Обновляем статус задачи в списке
+    if (type === 'status_changed') {
+      project.value.tasks[taskIndex].status = data.newStatus
+      // Принудительно обновляем реактивность
+      project.value = { ...project.value }
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe()
+  }
 })
 </script>
 
@@ -601,9 +638,30 @@ onMounted(() => {
 .priority-3 { background: #fef3c7; color: #92400e; }
 .priority-4 { background: #fee2e2; color: #991b1b; }
 
+.task-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #2d3748;
+}
+
+.start-date,
 .deadline {
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: 0.8rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.start-date {
+  color: #059669;
+}
+
+.deadline {
+  color: #dc2626;
 }
 
 .empty-state {
