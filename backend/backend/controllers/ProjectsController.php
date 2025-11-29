@@ -59,6 +59,11 @@ class ProjectsController extends Controller
                 'id' => $project->id,
                 'name' => $project->name,
                 'description' => $project->description,
+                'start_date' => $project->start_date,
+                'end_date' => $project->end_date,
+                'website_url' => $project->website_url,
+                'logo_url' => $project->logo_url,
+                'documents_url' => $project->documents_url,
                 'folder_id' => $project->folder_id,
                 'team' => [
                     'id' => $project->team->id,
@@ -107,14 +112,38 @@ class ProjectsController extends Controller
 
         $tasks = [];
         foreach ($project->tasks as $task) {
+            $assignees = [];
+            foreach ($task->assignees as $assignee) {
+                $assignees[] = [
+                    'id' => $assignee->id,
+                    'username' => $assignee->username,
+                    'name' => $assignee->name,
+                    'surname' => $assignee->surname,
+                ];
+            }
+
+            $timeTrackings = [];
+            foreach ($task->timeTrackings as $tracking) {
+                $timeTrackings[] = [
+                    'id' => $tracking->id,
+                    'user_id' => $tracking->user_id,
+                    'started_at' => $tracking->started_at,
+                    'ended_at' => $tracking->ended_at,
+                ];
+            }
+
             $tasks[] = [
                 'id' => $task->id,
                 'title' => $task->title,
+                'description' => $task->description,
                 'status' => $task->status,
                 'status_label' => $task->getStatusLabel(),
                 'priority' => $task->priority,
                 'priority_label' => $task->getPriorityLabel(),
+                'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
+                'assignees' => $assignees,
+                'time_trackings' => $timeTrackings,
                 'created_at' => $task->created_at,
             ];
         }
@@ -125,6 +154,11 @@ class ProjectsController extends Controller
                 'id' => $project->id,
                 'name' => $project->name,
                 'description' => $project->description,
+                'start_date' => $project->start_date,
+                'end_date' => $project->end_date,
+                'website_url' => $project->website_url,
+                'logo_url' => $project->logo_url,
+                'documents_url' => $project->documents_url,
                 'team' => [
                     'id' => $project->team->id,
                     'name' => $project->team->name,
@@ -166,6 +200,11 @@ class ProjectsController extends Controller
         $project = new Project();
         $project->name = $data['name'] ?? '';
         $project->description = $data['description'] ?? '';
+        $project->start_date = $data['start_date'] ?? null;
+        $project->end_date = $data['end_date'] ?? null;
+        $project->website_url = $data['website_url'] ?? null;
+        $project->logo_url = $data['logo_url'] ?? null;
+        $project->documents_url = $data['documents_url'] ?? null;
         $project->team_id = $teamId;
         $project->folder_id = !empty($data['folder_id']) ? (int)$data['folder_id'] : null;
 
@@ -205,10 +244,16 @@ class ProjectsController extends Controller
             return ['success' => false, 'message' => 'Проект не найден'];
         }
 
-
-        $project->name = $data['name'] ?? $project->name;
-        $project->description = $data['description'] ?? $project->description;
-        $project->folder_id = isset($data['folder_id']) ? (!empty($data['folder_id']) ? (int)$data['folder_id'] : null) : $project->folder_id;
+        // Обновляем все поля проекта
+        $project->name = $data['name'];
+        $project->description = $data['description'] ?? '';
+        $project->team_id = $data['team_id'];
+        $project->start_date = $data['start_date'] ?? null;
+        $project->end_date = $data['end_date'] ?? null;
+        $project->website_url = $data['website_url'] ?? null;
+        $project->logo_url = $data['logo_url'] ?? null;
+        $project->documents_url = $data['documents_url'] ?? null;
+        $project->folder_id = !empty($data['folder_id']) ? (int)$data['folder_id'] : null;
 
         if (!$project->save()) {
             return [

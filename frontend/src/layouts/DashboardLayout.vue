@@ -332,6 +332,10 @@ onMounted(() => {
 
 .content-wrapper {
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {

@@ -694,14 +694,17 @@ onMounted(() => {
   word-wrap: break-word;
 }
 
-.description-link {
-  color: #2563eb;
-  text-decoration: underline;
-  transition: color 0.2s;
+.description :deep(a) {
+  color: #2563eb !important;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-.description-link:hover {
-  color: #1d4ed8;
+.description :deep(a):hover {
+  color: #1d4ed8 !important;
+  background: #eff6ff;
+  text-decoration: underline;
 }
 
 .info-grid {

@@ -34,13 +34,37 @@
           @click="openProjectDetails(project.id)"
         >
           <div class="project-header">
-            <h3>{{ project.name }}</h3>
+            <div class="project-header-left">
+              <div class="project-logo-small" v-if="project.logo_url">
+                <img :src="project.logo_url" :alt="project.name" @error="handleLogoError" />
+              </div>
+              <h3>{{ project.name }}</h3>
+            </div>
             <span class="badge">{{ project.tasks_count }} задач</span>
           </div>
 
           <p class="project-description">
             {{ project.description || 'Описание отсутствует' }}
           </p>
+
+          <div class="project-meta" v-if="project.start_date || project.website_url || project.documents_url">
+            <div class="meta-item" v-if="project.start_date">
+              <span class="meta-icon">📅</span>
+              <span class="meta-text">{{ formatDate(project.start_date) }}</span>
+            </div>
+            <div class="meta-item" v-if="project.website_url">
+              <span class="meta-icon">🌐</span>
+              <a :href="project.website_url" @click.stop target="_blank" rel="noopener noreferrer" class="website-link">
+                {{ truncateUrl(project.website_url) }}
+              </a>
+            </div>
+            <div class="meta-item" v-if="project.documents_url">
+              <span class="meta-icon">📁</span>
+              <a :href="project.documents_url" @click.stop target="_blank" rel="noopener noreferrer" class="website-link">
+                Документы
+              </a>
+            </div>
+          </div>
 
           <div class="project-footer">
             <div class="team-info">
@@ -227,6 +251,36 @@ const canDeleteProject = (project) => {
   return authStore.user?.role === 1
 }
 
+// Форматирование даты
+const formatDate = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp * 1000)
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+// Сокращение URL
+const truncateUrl = (url) => {
+  if (!url) return ''
+  try {
+    const urlObj = new URL(url)
+    let domain = urlObj.hostname.replace('www.', '')
+    if (domain.length > 30) {
+      domain = domain.substring(0, 27) + '...'
+    }
+    return domain
+  } catch {
+    return url.length > 30 ? url.substring(0, 27) + '...' : url
+  }
+}
+
+const handleLogoError = (event) => {
+  event.target.style.display = 'none'
+}
+
 onMounted(() => {
   loadProjects()
 })
@@ -324,11 +378,32 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.project-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-logo-small {
+  flex-shrink: 0;
+}
+
+.project-logo-small img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #f9fafb;
+}
+
 .project-header h3 {
   margin: 0;
   font-size: 1.25rem;
   color: #1a1a1a;
   flex: 1;
+  min-width: 0;
 }
 
 .badge {
@@ -344,13 +419,54 @@ onMounted(() => {
 .project-description {
   color: #666;
   font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.meta-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.meta-text {
+  color: #666;
+}
+
+.website-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.website-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .project-footer {

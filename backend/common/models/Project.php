@@ -12,6 +12,11 @@ use yii\behaviors\TimestampBehavior;
  * @property int $id
  * @property string $name
  * @property string $description
+ * @property int $start_date
+ * @property int $end_date
+ * @property string $website_url
+ * @property string $logo_url
+ * @property string $documents_url
  * @property int $team_id
  * @property int $folder_id
  * @property int $created_at
@@ -37,7 +42,9 @@ class Project extends ActiveRecord
             [['name', 'team_id'], 'required'],
             ['name', 'string', 'max' => 255],
             ['description', 'string'],
-            [['team_id', 'folder_id'], 'integer'],
+            [['website_url', 'logo_url', 'documents_url'], 'string', 'max' => 500],
+            [['website_url', 'logo_url', 'documents_url'], 'url'],
+            [['team_id', 'folder_id', 'start_date', 'end_date'], 'integer'],
             ['team_id', 'exist', 'targetClass' => Team::class, 'targetAttribute' => 'id'],
             ['folder_id', 'exist', 'targetClass' => Folder::class, 'targetAttribute' => 'id'],
         ];
@@ -49,6 +56,11 @@ class Project extends ActiveRecord
             'id' => 'ID',
             'name' => 'Название проекта',
             'description' => 'Описание',
+            'start_date' => 'Дата начала',
+            'end_date' => 'Дата завершения',
+            'website_url' => 'Сайт',
+            'logo_url' => 'Логотип',
+            'documents_url' => 'Документы',
             'team_id' => 'Команда',
             'folder_id' => 'Папка',
             'created_at' => 'Создано',

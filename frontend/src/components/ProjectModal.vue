@@ -31,6 +31,62 @@
         </div>
 
         <div class="form-group">
+          <label for="project-start-date">Дата начала</label>
+          <input
+            id="project-start-date"
+            v-model="form.startDate"
+            type="date"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="project-end-date">Дата завершения</label>
+          <input
+            id="project-end-date"
+            v-model="form.endDate"
+            type="date"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="project-website">Сайт</label>
+          <input
+            id="project-website"
+            v-model="form.websiteUrl"
+            type="url"
+            placeholder="https://example.com"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="project-logo">Логотип (ссылка на изображение)</label>
+          <input
+            id="project-logo"
+            v-model="form.logoUrl"
+            type="url"
+            placeholder="https://example.com/logo.png"
+            class="form-input"
+          />
+          <div v-if="form.logoUrl" class="logo-preview">
+            <img :src="form.logoUrl" alt="Превью логотипа" @error="handleImageError" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="project-documents">Папка с документами (ссылка на Google Drive и т.д.)</label>
+          <input
+            id="project-documents"
+            v-model="form.documentsUrl"
+            type="url"
+            placeholder="https://drive.google.com/..."
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
           <label for="project-team">Команда *</label>
           <select
             id="project-team"
@@ -98,9 +154,28 @@ const emit = defineEmits(['close', 'saved'])
 const teamsStore = useTeamsStore()
 const teams = computed(() => teamsStore.teams)
 
+// Функция конвертации timestamp в формат yyyy-MM-dd для input[type="date"]
+const timestampToDateInput = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp * 1000)
+  return date.toISOString().split('T')[0]
+}
+
+// Функция конвертации формата yyyy-MM-dd в timestamp
+const dateInputToTimestamp = (dateStr) => {
+  if (!dateStr) return null
+  const date = new Date(dateStr)
+  return Math.floor(date.getTime() / 1000)
+}
+
 const form = ref({
   name: props.project?.name || '',
   description: props.project?.description || '',
+  startDate: timestampToDateInput(props.project?.start_date),
+  endDate: timestampToDateInput(props.project?.end_date),
+  websiteUrl: props.project?.website_url || '',
+  logoUrl: props.project?.logo_url || '',
+  documentsUrl: props.project?.documents_url || '',
   team_id: props.project?.team_id || null,
   folder_id: props.folderId || props.project?.folder_id || null
 })
@@ -132,6 +207,11 @@ const handleSubmit = async () => {
     const data = {
       name: form.value.name,
       description: form.value.description,
+      start_date: dateInputToTimestamp(form.value.startDate),
+      end_date: dateInputToTimestamp(form.value.endDate),
+      website_url: form.value.websiteUrl || null,
+      logo_url: form.value.logoUrl || null,
+      documents_url: form.value.documentsUrl || null,
       team_id: form.value.team_id,
       folder_id: form.value.folder_id || null
     }
@@ -155,6 +235,14 @@ const handleSubmit = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleImageError = (event) => {
+  event.target.style.display = 'none'
+  error.value = 'Не удалось загрузить изображение. Проверьте URL.'
+  setTimeout(() => {
+    error.value = ''
+  }, 3000)
 }
 
 const loadFolders = async () => {
@@ -277,6 +365,23 @@ onMounted(async () => {
 .form-textarea {
   resize: vertical;
   font-family: inherit;
+}
+
+.logo-preview {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-preview img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .error-message {

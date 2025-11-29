@@ -409,21 +409,29 @@ onUnmounted(() => {
 }
 
 .message-text :deep(a) {
-  color: #3b82f6;
-  text-decoration: underline;
+  color: #2563eb;
+  text-decoration: none;
   word-break: break-all;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .message-text :deep(a):hover {
-  color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+  text-decoration: underline;
 }
 
 .own-message .message-text :deep(a) {
-  color: #93c5fd;
+  color: #dbeafe;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .own-message .message-text :deep(a):hover {
-  color: #bfdbfe;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: underline;
 }
 
 .chat-input {

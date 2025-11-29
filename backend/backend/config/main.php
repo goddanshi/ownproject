@@ -126,6 +126,15 @@ return [
                 'DELETE workers/<id:\d+>' => 'workers/delete',
                 'POST workers/change-password' => 'workers/change-password',
                 'POST workers/update-created-at' => 'workers/update-created-at',
+
+                // --------------------------------
+                // Leads routes
+                'OPTIONS leads/<action>' => 'leads/options',
+                'GET leads' => 'leads/index',
+                'GET leads/<id:\d+>' => 'leads/view',
+                'POST leads/create' => 'leads/create',
+                'POST leads/update' => 'leads/update',
+                'DELETE leads/<id:\d+>' => 'leads/delete',
             ],
         ],
         'request' => [

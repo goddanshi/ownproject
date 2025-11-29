@@ -20,21 +20,43 @@
           </div>
 
           <!-- Команда и статистика -->
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">Команда:</span>
-              <div class="team-detail">
-                <span class="team-name">{{ project.team.name }}</span>
-                <span class="teamlead">Тимлид: {{ project.team.teamlead.name }} {{ project.team.teamlead.surname }}</span>
+          <div class="section">
+            <h3>Информация о проекте</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">Команда</span>
+                <div class="team-detail">
+                  <span class="team-name">{{ project.team.name }}</span>
+                  <span class="teamlead">Тимлид: {{ project.team.teamlead.name }} {{ project.team.teamlead.surname }}</span>
+                </div>
               </div>
-            </div>
-            <div class="info-item">
-              <span class="label">Создан:</span>
-              <span>{{ formatDate(project.created_at) }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Задач:</span>
-              <span>{{ project.tasks.length }}</span>
+
+              <div class="info-item" v-if="project.start_date">
+                <span class="label">Дата начала</span>
+                <span class="value">{{ formatDate(project.start_date) }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="label">Создан</span>
+                <span class="value">{{ formatDate(project.created_at) }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="label">Всего задач</span>
+                <span class="value">{{ project.tasks.length }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="label">Участников</span>
+                <span class="value">{{ project.participants.length }}</span>
+              </div>
+
+              <div class="info-item info-item-full" v-if="project.website_url">
+                <span class="label">Сайт</span>
+                <a :href="project.website_url" target="_blank" rel="noopener noreferrer" class="website-link">
+                  {{ project.website_url }}
+                </a>
+              </div>
             </div>
           </div>
 
@@ -85,7 +107,7 @@
                     {{ task.priority_label }}
                   </span>
                   <span v-if="task.deadline" class="deadline">
-                    ⏰ {{ formatDate(task.deadline) }}
+                    {{ formatDate(task.deadline) }}
                   </span>
                 </div>
               </div>
@@ -272,9 +294,11 @@ onMounted(() => {
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  background: #f9fafb;
+  padding: 1.25rem;
+  border-radius: 8px;
 }
 
 .info-item {
@@ -283,11 +307,22 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.info-item-full {
+  grid-column: 1 / -1;
+}
+
 .label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.value {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-weight: 500;
 }
 
 .team-detail {
@@ -298,12 +333,28 @@ onMounted(() => {
 
 .team-name {
   font-weight: 600;
-  color: #2d3748;
+  color: #1a1a1a;
+  font-size: 0.95rem;
 }
 
 .teamlead {
   font-size: 0.85rem;
   color: #666;
+  font-weight: 400;
+}
+
+.website-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.website-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .participants-grid {

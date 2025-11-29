@@ -99,10 +99,11 @@ import EmploersIcon from '@/components/icons/Emploers.vue'
 import DashboardIcon from '@/components/icons/Dashboard.vue'
 import TasksIcon from '@/components/icons/Tasks.vue'
 import ProjectsIcon from '@/components/icons/Projects.vue'
-import RequestIcon from '@/components/icons/Request.vue'
 import LogoutIcon from '@/components/icons/Logout.vue'
 import ComandsIcon from "@/components/icons/Comands.vue"
+import RequestIcon from './icons/Request.vue'
 import AiIcon from "@/components/icons/AI.vue"
+import LeadsIcon from "@/components/icons/Leads.vue"
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -138,10 +139,9 @@ const generalMenuItems = [
     permission: 'view_tasks'
   },
   {
-    path: '/requests',
-    label: 'Заявки',
-    icon: RequestIcon,
-    permission: 'view_requests'
+    path: '/leads',
+    label: 'Лиды',
+    icon: RequestIcon
   }
 ]
 

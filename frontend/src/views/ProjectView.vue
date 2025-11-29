@@ -25,6 +25,9 @@
       <!-- Карточка проекта -->
       <div class="project-card">
         <div class="project-header">
+          <div class="project-logo" v-if="project.logo_url">
+            <img :src="project.logo_url" :alt="project.name" @error="handleLogoError" />
+          </div>
           <div class="project-main-info">
             <h2>{{ project.name }}</h2>
             <p class="description">{{ project.description || 'Описание отсутствует' }}</p>
@@ -38,41 +41,96 @@
           </div>
         </div>
 
-        <div class="project-meta">
-          <div class="meta-item">
-            <span class="label">Команда:</span>
-            <span class="value">{{ project.team?.name }}</span>
-          </div>
-          <div class="meta-item">
-            <span class="label">Тимлид:</span>
-            <span class="value">{{ project.team?.teamlead?.name }} {{ project.team?.teamlead?.surname }}</span>
-          </div>
-          <div class="meta-item">
-            <span class="label">Всего задач:</span>
-            <span class="value">{{ project.tasks?.length || 0 }}</span>
-          </div>
-          <div class="meta-item">
-            <span class="label">Участников:</span>
-            <span class="value">{{ project.participants?.length || 0 }}</span>
-          </div>
-        </div>
-      </div>
+        <!-- Кнопка с информацией о команде -->
+        <div class="team-info-toggle">
+          <button class="toggle-btn" @click="showTeamInfo = !showTeamInfo">
+            <span class="toggle-label">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+              </svg>
+              Команда и статистика
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="chevron" :class="{ 'rotated': showTeamInfo }">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
 
-      <!-- Участники проекта -->
-      <div class="section-card">
-        <h3>Участники проекта ({{ project.participants?.length || 0 }})</h3>
-        <div class="participants-grid">
-          <div
-            v-for="participant in project.participants"
-            :key="participant.id"
-            class="participant-card"
-          >
-            <div class="avatar">
-              {{ participant.username?.[0]?.toUpperCase() || 'U' }}
+          <transition name="expand">
+            <div v-if="showTeamInfo" class="team-info-content">
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">Команда:</span>
+                  <span class="value">{{ project.team?.name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Тимлид:</span>
+                  <span class="value">{{ project.team?.teamlead?.name }} {{ project.team?.teamlead?.surname }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Всего задач:</span>
+                  <span class="value">{{ project.tasks?.length || 0 }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Участников:</span>
+                  <span class="value">{{ project.participants?.length || 0 }}</span>
+                </div>
+              </div>
+
+              <!-- Участники проекта внутри раскрывающейся секции -->
+              <div class="participants-section">
+                <h4 class="participants-title">Участники проекта</h4>
+                <div class="participants-grid">
+                  <div
+                    v-for="participant in project.participants"
+                    :key="participant.id"
+                    class="participant-card"
+                  >
+                    <div class="avatar">
+                      {{ participant.username?.[0]?.toUpperCase() || 'U' }}
+                    </div>
+                    <div class="participant-info">
+                      <div class="name">{{ participant.name }} {{ participant.surname }}</div>
+                      <div class="email">{{ participant.email }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="participant-info">
-              <div class="name">{{ participant.name }} {{ participant.surname }}</div>
-              <div class="email">{{ participant.email }}</div>
+          </transition>
+        </div>
+
+        <!-- Дополнительная информация о проекте -->
+        <div class="project-details" v-if="project.start_date || project.end_date || project.website_url || project.documents_url">
+          <div class="detail-item" v-if="project.start_date">
+            <span class="detail-icon">📅</span>
+            <div class="detail-content">
+              <span class="detail-label">Дата начала</span>
+              <span class="detail-value">{{ formatDate(project.start_date) }}</span>
+            </div>
+          </div>
+          <div class="detail-item" v-if="project.end_date">
+            <span class="detail-icon">🏁</span>
+            <div class="detail-content">
+              <span class="detail-label">Дата завершения</span>
+              <span class="detail-value">{{ formatDate(project.end_date) }}</span>
+            </div>
+          </div>
+          <div class="detail-item" v-if="project.website_url">
+            <span class="detail-icon">🌐</span>
+            <div class="detail-content">
+              <span class="detail-label">Сайт проекта</span>
+              <a :href="project.website_url" target="_blank" rel="noopener noreferrer" class="detail-link">
+                {{ project.website_url }}
+              </a>
+            </div>
+          </div>
+          <div class="detail-item" v-if="project.documents_url">
+            <span class="detail-icon">📁</span>
+            <div class="detail-content">
+              <span class="detail-label">Документы</span>
+              <a :href="project.documents_url" target="_blank" rel="noopener noreferrer" class="detail-link">
+                Открыть папку с документами →
+              </a>
             </div>
           </div>
         </div>
@@ -86,38 +144,73 @@
             <button class="btn-primary" @click="openCreateTaskModal">
               + Создать задачу
             </button>
-            <RouterLink :to="`/tasks?project=${project.id}`" class="btn-secondary">
-              Посмотреть все задачи →
-            </RouterLink>
           </div>
         </div>
 
-        <div v-if="project.tasks && project.tasks.length > 0" class="tasks-grid">
+        <div v-if="project.tasks && project.tasks.length > 0" class="tasks-list">
           <div
-            v-for="task in project.tasks.slice(0, 6)"
+            v-for="task in project.tasks"
             :key="task.id"
-            class="task-card"
-            @click="openTaskDetails(task.id)"
+            class="task-row"
           >
-            <div class="task-header">
-              <h4>{{ task.title }}</h4>
-              <span :class="['status-badge', `status-${task.status}`]">
-                {{ getStatusLabel(task.status) }}
-              </span>
+            <div class="task-main" @click="openTaskDetails(task.id)">
+              <div class="task-title-section">
+                <h4 class="task-name">{{ task.title }}</h4>
+                <span :class="['status-badge', `status-${task.status}`]">
+                  {{ getStatusLabel(task.status) }}
+                </span>
+              </div>
+
+              <div class="task-info-grid">
+                <div class="task-info-item">
+                  <span class="info-label">Исполнитель:</span>
+                  <span class="info-value">
+                    <span v-if="task.assignees && task.assignees.length > 0">
+                      {{ task.assignees.map(a => `${a.name} ${a.surname}`).join(', ') }}
+                    </span>
+                    <span v-else class="not-assigned">Не назначен</span>
+                  </span>
+                </div>
+
+                <div class="task-info-item">
+                  <span class="info-label">Проект:</span>
+                  <span class="info-value">{{ project.name }}</span>
+                </div>
+
+                <div class="task-info-item">
+                  <span class="info-label">Даты:</span>
+                  <span class="info-value">
+                    <span v-if="task.start_date || task.deadline">
+                      <span v-if="task.start_date">{{ formatDate(task.start_date) }}</span>
+                      <span v-if="task.start_date && task.deadline"> - </span>
+                      <span v-if="task.deadline">{{ formatDate(task.deadline) }}</span>
+                    </span>
+                    <span v-else class="no-dates">Не указаны</span>
+                  </span>
+                </div>
+
+                <div class="task-info-item">
+                  <span class="info-label">Приоритет:</span>
+                  <span :class="['priority-badge', `priority-${task.priority}`]">
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
+                </div>
+              </div>
             </div>
-            <p class="task-description">{{ task.description || 'Нет описания' }}</p>
-            <div class="task-meta">
-              <span :class="['priority-badge', `priority-${task.priority}`]">
-                {{ getPriorityLabel(task.priority) }}
-              </span>
-            </div>
-            <div class="task-dates" v-if="task.start_date || task.deadline">
-              <span v-if="shouldShowStartDate(task)" class="start-date">
-                Начало: {{ formatDate(task.start_date) }}
-              </span>
-              <span v-else class="deadline">
-                Дедлайн: {{ formatDate(task.deadline) }}
-              </span>
+
+            <div class="task-actions">
+              <button
+                :class="['timer-btn', { 'tracking': isTaskTracking(task.id) }]"
+                @click.stop="toggleTimer(task.id)"
+                :title="isTaskTracking(task.id) ? 'Остановить таймер' : 'Запустить таймер'"
+              >
+                <svg v-if="!isTaskTracking(task.id)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -168,6 +261,7 @@ import ProjectModal from './Projects/ProjectModal.vue'
 import TaskModal from './Tasks/TaskModal.vue'
 import TaskDetailsModal from './Tasks/TaskDetailsModal.vue'
 import projectsApi from '../services/projects'
+import tasksApi from '../services/tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -182,6 +276,8 @@ const showTaskModal = ref(false)
 const showTaskDetailsModal = ref(false)
 const selectedTask = ref(null)
 const selectedTaskId = ref(null)
+const showTeamInfo = ref(false)
+const trackingTasks = ref(new Set()) // Хранит ID задач с активным отслеживанием
 
 let unsubscribe = null
 
@@ -208,6 +304,7 @@ const loadProject = async () => {
 
     if (response.success) {
       project.value = response.project
+      checkActiveTracking()
     } else {
       error.value = response.message || 'Не удалось загрузить проект'
     }
@@ -273,10 +370,56 @@ const handleTaskDelete = () => {
   loadProject()
 }
 
-const shouldShowStartDate = (task) => {
-  if (!task.start_date) return false
-  const now = Math.floor(Date.now() / 1000)
-  return now < task.start_date
+const isTaskTracking = (taskId) => {
+  return trackingTasks.value.has(taskId)
+}
+
+const toggleTimer = async (taskId) => {
+  if (isTaskTracking(taskId)) {
+    await stopTimer(taskId)
+  } else {
+    await startTimer(taskId)
+  }
+}
+
+const startTimer = async (taskId) => {
+  try {
+    await tasksApi.startTracking(taskId)
+    trackingTasks.value.add(taskId)
+    // Обновляем проект для получения свежих данных
+    await loadProject()
+  } catch (error) {
+    console.error('Ошибка запуска таймера:', error)
+  }
+}
+
+const stopTimer = async (taskId) => {
+  try {
+    await tasksApi.stopTracking(taskId)
+    trackingTasks.value.delete(taskId)
+    // Обновляем проект для получения свежих данных
+    await loadProject()
+  } catch (error) {
+    console.error('Ошибка остановки таймера:', error)
+  }
+}
+
+const checkActiveTracking = () => {
+  if (!project.value?.tasks) return
+
+  trackingTasks.value.clear()
+
+  // Проверяем каждую задачу на активное отслеживание текущего пользователя
+  project.value.tasks.forEach(task => {
+    if (task.time_trackings) {
+      const userTracking = task.time_trackings.find(
+        t => t.user_id === authStore.user?.id && !t.ended_at
+      )
+      if (userTracking) {
+        trackingTasks.value.add(task.id)
+      }
+    }
+  })
 }
 
 const formatDate = (timestamp) => {
@@ -304,6 +447,10 @@ const getPriorityLabel = (priority) => {
     4: 'Критический'
   }
   return labels[priority] || 'Неизвестно'
+}
+
+const handleLogoError = (event) => {
+  event.target.style.display = 'none'
 }
 
 // Следим за изменением ID проекта в URL
@@ -416,9 +563,26 @@ onUnmounted(() => {
 
 .project-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.project-logo {
+  flex-shrink: 0;
+}
+
+.project-logo img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #f9fafb;
+}
+
+.project-main-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .project-main-info h2 {
@@ -462,53 +626,101 @@ onUnmounted(() => {
   color: #666;
 }
 
-.project-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+/* Кнопка переключения информации о команде */
+.team-info-toggle {
+  margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
 }
 
-.meta-item {
+.toggle-btn {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.meta-item .label {
+.toggle-btn:hover {
+  background: #f3f4f6;
+  border-color: #2d3748;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.toggle-label .icon {
+  width: 24px;
+  height: 24px;
+  color: #667eea;
+}
+
+.chevron {
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+}
+
+.chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.team-info-content {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item .label {
   font-size: 0.875rem;
   color: #6b7280;
   font-weight: 500;
 }
 
-.meta-item .value {
-  font-size: 1rem;
+.info-item .value {
+  font-size: 1.05rem;
   color: #1a1a1a;
   font-weight: 600;
 }
 
-.section-card h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-  color: #1a1a1a;
+/* Секция участников внутри раскрывающегося блока */
+.participants-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-header h3 {
-  margin: 0;
-}
-
-.section-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
+.participants-title {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .participants-grid {
@@ -525,6 +737,7 @@ onUnmounted(() => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   transition: all 0.2s;
+  background: white;
 }
 
 .participant-card:hover {
@@ -565,57 +778,230 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.tasks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+/* Блок с деталями проекта */
+.project-details {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.task-card {
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.detail-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.detail-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  word-break: break-all;
+  transition: color 0.2s;
+  font-size: 1rem;
+}
+
+.detail-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Анимация раскрытия */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 2000px;
+}
+
+.section-card h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: #1a1a1a;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   padding: 1.25rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s;
+  background: white;
+}
+
+.task-row:hover {
+  border-color: #2d3748;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.task-main {
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
 }
 
-.task-card:hover {
-  border-color: #2d3748;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
-
-.task-header {
+.task-title-section {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.task-header h4 {
+.task-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
   color: #1a1a1a;
   flex: 1;
 }
 
-.task-description {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0 0 1rem 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.task-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
-.task-meta {
+.task-info-item {
   display: flex;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.not-assigned,
+.no-dates {
+  color: #9ca3af;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.timer-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.timer-btn:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.timer-btn.tracking {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.timer-btn.tracking:hover {
+  background: #fecaca;
+  border-color: #b91c1c;
+}
+
+.timer-btn svg {
+  width: 24px;
+  height: 24px;
+  color: #10b981;
+}
+
+.timer-btn.tracking svg {
+  color: #dc2626;
 }
 
 .status-badge,
@@ -637,32 +1023,6 @@ onUnmounted(() => {
 .priority-2 { background: #dbeafe; color: #1e40af; }
 .priority-3 { background: #fef3c7; color: #92400e; }
 .priority-4 { background: #fee2e2; color: #991b1b; }
-
-.task-dates {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border-radius: 6px;
-  border-left: 3px solid #2d3748;
-}
-
-.start-date,
-.deadline {
-  font-size: 0.8rem;
-  color: #4b5563;
-  font-weight: 500;
-}
-
-.start-date {
-  color: #059669;
-}
-
-.deadline {
-  color: #dc2626;
-}
 
 .empty-state {
   padding: 3rem;
@@ -719,9 +1079,31 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .participants-grid,
-  .tasks-grid {
+  .participants-grid {
     grid-template-columns: 1fr;
+  }
+
+  .task-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .section-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .section-actions > * {
+    width: 100%;
   }
 }
 </style>
