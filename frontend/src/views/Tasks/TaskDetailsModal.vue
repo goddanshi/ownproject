@@ -176,10 +176,10 @@
 
           <!-- История отслеживания -->
           <div class="section" v-if="task.time_trackings.length > 0">
-            <h3>История ({{ task.time_trackings.length }})</h3>
-            <div class="tracking-list">
+            <h3>История отслеживания времени ({{ task.time_trackings.length }})</h3>
+            <div class="tracking-list-scrollable">
               <div
-                v-for="tracking in task.time_trackings.slice(0, 5)"
+                v-for="tracking in task.time_trackings"
                 :key="tracking.id"
                 class="tracking-item"
               >
@@ -194,6 +194,11 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- История активности -->
+          <div class="section">
+            <ActivityLog :task-id="taskId" />
           </div>
         </div>
 
@@ -244,6 +249,7 @@ import { ref, onMounted, inject, computed } from 'vue'
 import tasksApi from '../../services/tasks'
 import { useAuthStore } from '../../stores/auth'
 import TaskChat from '../../components/TaskChat.vue'
+import ActivityLog from '../../components/ActivityLog.vue'
 import { useTaskEvents } from '../../composables/useTaskEvents'
 
 const props = defineProps({
@@ -321,12 +327,6 @@ const startTracking = async () => {
   try {
     await tasksApi.startTracking(props.taskId)
     isTracking.value = true
-
-    // Эмитим событие для обновления чата
-    emitTaskEvent(props.taskId, 'tracking_started', {
-      userId: authStore.user?.id
-    })
-
     loadTask()
   } catch (error) {
     console.error('Ошибка начала отслеживания:', error)
@@ -335,15 +335,8 @@ const startTracking = async () => {
 
 const stopTracking = async () => {
   try {
-    const response = await tasksApi.stopTracking(props.taskId)
+    await tasksApi.stopTracking(props.taskId)
     isTracking.value = false
-
-    // Эмитим событие для обновления чата
-    emitTaskEvent(props.taskId, 'tracking_stopped', {
-      userId: authStore.user?.id,
-      duration: response.tracking?.duration
-    })
-
     loadTask()
     emit('updated')
   } catch (error) {
@@ -810,14 +803,52 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.tracking-list-scrollable {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.tracking-list-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tracking-list-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.tracking-list-scrollable::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.tracking-list-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 .tracking-item {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
   padding: 0.75rem;
-  background: #f9f9f9;
+  background: white;
   border-radius: 8px;
   font-size: 0.9rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.tracking-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: #2d3748;
 }
 
 .tracking-user {
