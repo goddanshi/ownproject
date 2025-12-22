@@ -483,7 +483,7 @@ const loadOverrunsStatistics = async () => {
 const exportToExcel = (type) => {
   const API_URL = import.meta.env.DEV
     ? 'http://localhost:8001'
-    : 'http://185.104.113.132:8001'
+    : 'http://185.104.113.132:8000'
 
   const endpoints = {
     tasks: '/api/statistics/export-tasks',
