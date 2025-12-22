@@ -78,6 +78,7 @@ class TasksController extends Controller
                 'priority_label' => $task->getPriorityLabel(),
                 'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
+                'estimated_time' => $task->estimated_time,
                 'project' => [
                     'id' => $task->project->id,
                     'name' => $task->project->name,
@@ -133,6 +134,7 @@ class TasksController extends Controller
                 'priority_label' => $task->getPriorityLabel(),
                 'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
+                'estimated_time' => $task->estimated_time,
                 'project' => [
                     'id' => $task->project->id,
                     'name' => $task->project->name,
@@ -220,6 +222,7 @@ class TasksController extends Controller
                 'priority_label' => $task->getPriorityLabel(),
                 'start_date' => $task->start_date,
                 'deadline' => $task->deadline,
+                'estimated_time' => $task->estimated_time,
                 'project' => [
                     'id' => $task->project->id,
                     'name' => $task->project->name,
@@ -268,6 +271,7 @@ class TasksController extends Controller
         $task->priority = $data['priority'] ?? Task::PRIORITY_MEDIUM;
         $task->start_date = $data['start_date'] ?? null;
         $task->deadline = $data['deadline'] ?? null;
+        $task->estimated_time = $data['estimated_time'] ?? null;
         $task->created_by = $user->id;
 
         if (!$task->save()) {
@@ -324,6 +328,7 @@ class TasksController extends Controller
         $task->priority = $data['priority'] ?? $task->priority;
         $task->start_date = $data['start_date'] ?? $task->start_date;
         $task->deadline = $data['deadline'] ?? $task->deadline;
+        $task->estimated_time = $data['estimated_time'] ?? $task->estimated_time;
 
         if (!$task->save()) {
             return [

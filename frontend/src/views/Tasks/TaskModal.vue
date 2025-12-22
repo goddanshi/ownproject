@@ -80,6 +80,18 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label>Планируемое время (часы)</label>
+          <input
+            v-model="formData.estimatedHours"
+            type="number"
+            min="0"
+            step="0.5"
+            placeholder="Сколько часов планируется потратить"
+          />
+          <small class="help-text">Укажите ориентировочное время выполнения задачи в часах</small>
+        </div>
+
         <div class="form-group" v-if="!task && projectParticipants.length > 0">
           <label>Участники</label>
           <div class="participants-list">
@@ -134,6 +146,7 @@ const formData = ref({
   priority: '2',
   startDate: '',
   deadline: '',
+  estimatedHours: null,
   assigneeIds: []
 })
 
@@ -155,6 +168,11 @@ const handleSubmit = async () => {
       ? Math.floor(new Date(formData.value.deadline).getTime() / 1000)
       : null
 
+    // Конвертируем часы в секунды
+    const estimatedTime = formData.value.estimatedHours
+      ? Math.floor(parseFloat(formData.value.estimatedHours) * 3600)
+      : null
+
     if (props.task) {
       await tasksApi.updateTask(props.task.id, {
         title: formData.value.title,
@@ -162,7 +180,8 @@ const handleSubmit = async () => {
         status: parseInt(formData.value.status),
         priority: parseInt(formData.value.priority),
         start_date: startDate,
-        deadline
+        deadline,
+        estimated_time: estimatedTime
       })
     } else {
       await tasksApi.createTask({
@@ -173,6 +192,7 @@ const handleSubmit = async () => {
         priority: parseInt(formData.value.priority),
         start_date: startDate,
         deadline,
+        estimated_time: estimatedTime,
         assigneeIds: formData.value.assigneeIds
       })
     }
@@ -233,6 +253,9 @@ onMounted(async () => {
       deadline: props.task.deadline
         ? new Date(props.task.deadline * 1000).toISOString().split('T')[0]
         : '',
+      estimatedHours: props.task.estimated_time
+        ? (props.task.estimated_time / 3600).toFixed(1)
+        : null,
       assigneeIds: []
     }
     loadProjectParticipants(formData.value.projectId)
@@ -420,5 +443,12 @@ textarea {
 
 .participant-checkbox span {
   font-weight: normal;
+}
+
+.help-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 </style>
