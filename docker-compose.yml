@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -12,7 +10,7 @@ services:
       MYSQL_USER: ownproject
       MYSQL_PASSWORD: ownproject
     ports:
-      - "3306:3306"
+      - "3307:3306"  # Изменено с 3306:3306 на 3307:3306
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -25,11 +23,11 @@ services:
     restart: unless-stopped
     environment:
       PMA_HOST: mysql
-      PMA_PORT: 3306
+      PMA_PORT: 3306  # Внутри Docker остается 3306
       PMA_USER: root
       PMA_PASSWORD: root
     ports:
-      - "8080:80"
+      - "8090:80"  # Изменено с 8080 на 8090
     depends_on:
       - mysql
     networks:
@@ -46,7 +44,7 @@ services:
     volumes:
       - ./:/var/www/backend
     ports:
-      - "8000:80"
+      - "8001:80"  # Изменено с 8000 на 8001
     depends_on:
       - mysql
     networks:

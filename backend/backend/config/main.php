@@ -135,6 +135,18 @@ return [
                 'POST leads/create' => 'leads/create',
                 'POST leads/update' => 'leads/update',
                 'DELETE leads/<id:\d+>' => 'leads/delete',
+
+                // --------------------------------
+                // Statistics routes
+                'OPTIONS api/statistics/<action>' => 'statistics/options',
+                'GET api/statistics/tasks' => 'statistics/tasks',
+                'GET api/statistics/projects' => 'statistics/projects',
+                'GET api/statistics/employees' => 'statistics/employees',
+                'GET api/statistics/overruns' => 'statistics/overruns',
+                'GET api/statistics/export-tasks' => 'statistics/export-tasks',
+                'GET api/statistics/export-projects' => 'statistics/export-projects',
+                'GET api/statistics/export-employees' => 'statistics/export-employees',
+                'GET api/statistics/export-overruns' => 'statistics/export-overruns',
             ],
         ],
         'request' => [

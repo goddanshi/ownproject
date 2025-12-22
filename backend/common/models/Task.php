@@ -17,6 +17,7 @@ use yii\behaviors\TimestampBehavior;
  * @property int $priority
  * @property int $start_date
  * @property int $deadline
+ * @property int $estimated_time
  * @property int $created_at
  * @property int $updated_at
  * @property int $created_by
@@ -53,13 +54,14 @@ class Task extends ActiveRecord
             [['title', 'project_id', 'created_by'], 'required'],
             ['title', 'string', 'max' => 255],
             ['description', 'string'],
-            [['project_id', 'status', 'priority', 'start_date', 'deadline', 'created_by'], 'integer'],
+            [['project_id', 'status', 'priority', 'start_date', 'deadline', 'estimated_time', 'created_by'], 'integer'],
             ['project_id', 'exist', 'targetClass' => Project::class, 'targetAttribute' => 'id'],
             ['created_by', 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
             ['status', 'default', 'value' => self::STATUS_TODO],
             ['status', 'in', 'range' => [self::STATUS_TODO, self::STATUS_IN_PROGRESS, self::STATUS_REVIEW, self::STATUS_DONE]],
             ['priority', 'default', 'value' => self::PRIORITY_MEDIUM],
             ['priority', 'in', 'range' => [self::PRIORITY_LOW, self::PRIORITY_MEDIUM, self::PRIORITY_HIGH, self::PRIORITY_URGENT]],
+            ['estimated_time', 'integer', 'min' => 0],
         ];
     }
 
@@ -74,6 +76,7 @@ class Task extends ActiveRecord
             'priority' => 'Приоритет',
             'start_date' => 'Дата начала',
             'deadline' => 'Дедлайн',
+            'estimated_time' => 'Планируемое время (сек)',
             'created_at' => 'Дата создания',
             'updated_at' => 'Обновлено',
             'created_by' => 'Автор',

@@ -82,6 +82,12 @@ const router = createRouter({
       name: 'my-team',
       component: () => import('../views/MyTeamView.vue'),
       meta: { requiresAuth: true, permission: 'view_my_team' } // ← Изменили на view_my_team
+    },
+    {
+      path: '/statistics',
+      name: 'statistics',
+      component: () => import('../views/Statistics.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
