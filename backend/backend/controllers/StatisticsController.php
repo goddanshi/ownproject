@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use Yii;
 use yii\rest\Controller;
+use yii\filters\Cors;
 use yii\web\Response;
 use common\models\Task;
 use common\models\TimeTracking;
@@ -20,7 +21,31 @@ class StatisticsController extends Controller
     {
         $behaviors = parent::behaviors();
         $behaviors['contentNegotiator']['formats']['application/json'] = Response::FORMAT_JSON;
+
+        $behaviors['corsFilter'] = [
+            'class' => Cors::class,
+            'cors' => [
+                'Origin' => ['http://localhost:5173', 'http://185.213.240.236:5173', 'http://185.104.113.132', 'http://185.104.113.132:8080', 'http://185.213.240.236'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+                'Access-Control-Max-Age' => 86400,
+            ],
+        ];
+
         return $behaviors;
+    }
+
+    public function beforeAction($action)
+    {
+        $this->enableCsrfValidation = false;
+        return parent::beforeAction($action);
+    }
+
+    public function actionOptions()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return ['success' => true];
     }
 
     /**
