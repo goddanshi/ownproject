@@ -105,6 +105,7 @@ import RequestIcon from './icons/Request.vue'
 import AiIcon from "@/components/icons/AI.vue"
 import LeadsIcon from "@/components/icons/Leads.vue"
 import StatisticsIcon from "@/components/icons/Statistics.vue"
+import AnalyticsIcon from "@/components/icons/Analytics.vue"
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -149,6 +150,12 @@ const generalMenuItems = [
     label: 'Статистика',
     icon: StatisticsIcon,
     // permission: 'view_statistics'
+  },
+  {
+    path: '/analytics',
+    label: 'Аналитика',
+    icon: AnalyticsIcon,
+    // permission: 'view_analytics'
   }
 ]
 
