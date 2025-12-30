@@ -6,7 +6,8 @@ const ANALYTICS_API_URL = 'http://185.104.113.132:9999'
 const analyticsApi = axios.create({
   baseURL: ANALYTICS_API_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer Almfhj019IIiz-xxvjh12UUJAL<K1310000ZXJjqetvvn'
   }
 })
 
