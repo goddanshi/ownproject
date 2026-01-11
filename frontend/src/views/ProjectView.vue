@@ -147,13 +147,34 @@
         <div class="section-header">
           <h3>Задачи проекта ({{ project.tasks?.length || 0 }})</h3>
           <div class="section-actions">
+            <div class="view-toggle">
+              <button
+                :class="['view-btn', { active: taskViewMode === 'list' }]"
+                @click="changeTaskViewMode('list')"
+                title="Список"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              </button>
+              <button
+                :class="['view-btn', { active: taskViewMode === 'table' }]"
+                @click="changeTaskViewMode('table')"
+                title="Таблица"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
+                </svg>
+              </button>
+            </div>
             <button class="btn-primary" @click="openCreateTaskModal">
               + Создать задачу
             </button>
           </div>
         </div>
 
-        <div v-if="project.tasks && project.tasks.length > 0" class="tasks-list">
+        <!-- Списочный вид задач -->
+        <div v-if="project.tasks && project.tasks.length > 0 && taskViewMode === 'list'" class="tasks-list">
           <div
             v-for="task in project.tasks"
             :key="task.id"
@@ -220,6 +241,80 @@
             </div>
           </div>
         </div>
+
+        <!-- Табличный вид задач -->
+        <div v-if="project.tasks && project.tasks.length > 0 && taskViewMode === 'table'" class="tasks-table-wrapper">
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th class="col-title">Название</th>
+                <th class="col-assignee">Исполнитель</th>
+                <th class="col-status">Статус</th>
+                <th class="col-priority">Приоритет</th>
+                <th class="col-dates">Даты</th>
+                <th class="col-timer">Таймер</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="task in project.tasks"
+                :key="task.id"
+                class="task-row-table"
+              >
+                <td class="col-title" @click="openTaskDetails(task.id)">
+                  <div class="task-title-cell">
+                    <span class="task-title-text">{{ task.title }}</span>
+                  </div>
+                </td>
+                <td class="col-assignee" @click="openTaskDetails(task.id)">
+                  <div class="assignees-cell">
+                    <span v-if="task.assignees && task.assignees.length > 0" class="assignees-text">
+                      {{ task.assignees.map(a => `${a.name} ${a.surname}`).join(', ') }}
+                    </span>
+                    <span v-else class="not-assigned-text">Не назначен</span>
+                  </div>
+                </td>
+                <td class="col-status" @click="openTaskDetails(task.id)">
+                  <span :class="['status-badge', `status-${task.status}`]">
+                    {{ getStatusLabel(task.status) }}
+                  </span>
+                </td>
+                <td class="col-priority" @click="openTaskDetails(task.id)">
+                  <span :class="['priority-badge', `priority-${task.priority}`]">
+                    {{ getPriorityLabel(task.priority) }}
+                  </span>
+                </td>
+                <td class="col-dates" @click="openTaskDetails(task.id)">
+                  <div class="dates-cell">
+                    <span v-if="task.start_date" class="date-item start">
+                      {{ formatDate(task.start_date) }}
+                    </span>
+                    <span v-if="task.deadline" class="date-item deadline">
+                      {{ formatDate(task.deadline) }}
+                    </span>
+                    <span v-if="!task.start_date && !task.deadline" class="no-dates-text">
+                      —
+                    </span>
+                  </div>
+                </td>
+                <td class="col-timer">
+                  <button
+                    :class="['timer-btn-table', { 'tracking': isTaskTracking(task.id) }]"
+                    @click.stop="toggleTimer(task.id)"
+                    :title="isTaskTracking(task.id) ? 'Остановить таймер' : 'Запустить таймер'"
+                  >
+                    <svg v-if="!isTaskTracking(task.id)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div v-else class="empty-state">
           <p>В этом проекте пока нет задач</p>
           <button class="btn-primary" @click="openCreateTaskModal">
@@ -284,9 +379,16 @@ const selectedTask = ref(null)
 const selectedTaskId = ref(null)
 const showTeamInfo = ref(false)
 const showProjectDetails = ref(false)
+const taskViewMode = ref(localStorage.getItem('project-tasks-view-mode') || 'list')
 const trackingTasks = ref(new Set()) // Хранит ID задач с активным отслеживанием
 
 let unsubscribe = null
+
+// Функция изменения режима просмотра задач
+const changeTaskViewMode = (mode) => {
+  taskViewMode.value = mode
+  localStorage.setItem('project-tasks-view-mode', mode)
+}
 
 const canManageProject = computed(() => {
   if (!project.value) return false
@@ -888,6 +990,47 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.view-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-btn {
+  padding: 0.6rem;
+  background: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+}
+
+.view-btn:first-child {
+  border-right: 1px solid #e5e7eb;
+}
+
+.view-btn:hover {
+  background: #f9fafb;
+}
+
+.view-btn.active {
+  background: #2d3748;
+}
+
+.view-btn.active svg {
+  color: white;
+}
+
 .tasks-list {
   display: flex;
   flex-direction: column;
@@ -1109,5 +1252,183 @@ onUnmounted(() => {
   .section-actions > * {
     width: 100%;
   }
+
+  .tasks-table-wrapper {
+    overflow-x: scroll;
+  }
+
+  .tasks-table {
+    min-width: 800px;
+  }
+}
+
+/* Таблица задач в ProjectView */
+.tasks-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.tasks-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tasks-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.tasks-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+.tasks-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.tasks-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tasks-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.tasks-table .col-title {
+  width: 35%;
+  min-width: 250px;
+}
+
+.tasks-table .col-assignee {
+  width: 20%;
+  min-width: 150px;
+}
+
+.tasks-table .col-status {
+  width: 12%;
+  min-width: 110px;
+}
+
+.tasks-table .col-priority {
+  width: 12%;
+  min-width: 110px;
+}
+
+.tasks-table .col-dates {
+  width: 15%;
+  min-width: 140px;
+}
+
+.tasks-table .col-timer {
+  width: 6%;
+  min-width: 80px;
+  text-align: center;
+}
+
+.task-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.task-title-text {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.assignees-cell {
+  display: flex;
+  align-items: center;
+}
+
+.assignees-text {
+  font-size: 0.9rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.not-assigned-text {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.dates-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-item {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.date-item.start {
+  color: #059669;
+}
+
+.date-item.deadline {
+  color: #dc2626;
+}
+
+.no-dates-text {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.timer-btn-table {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.timer-btn-table:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.timer-btn-table.tracking {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.timer-btn-table.tracking:hover {
+  background: #fecaca;
+  border-color: #b91c1c;
+}
+
+.timer-btn-table svg {
+  width: 20px;
+  height: 20px;
+  color: #10b981;
+}
+
+.timer-btn-table.tracking svg {
+  color: #dc2626;
 }
 </style>
