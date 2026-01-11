@@ -19,6 +19,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string $documents_url
  * @property int $team_id
  * @property int $folder_id
+ * @property int $position
  * @property int $created_at
  * @property int $updated_at
  */
@@ -44,7 +45,8 @@ class Project extends ActiveRecord
             ['description', 'string'],
             [['website_url', 'logo_url', 'documents_url'], 'string', 'max' => 500],
             [['website_url', 'logo_url', 'documents_url'], 'url'],
-            [['team_id', 'folder_id', 'start_date', 'end_date'], 'integer'],
+            [['team_id', 'folder_id', 'start_date', 'end_date', 'position'], 'integer'],
+            ['position', 'default', 'value' => 0],
             ['team_id', 'exist', 'targetClass' => Team::class, 'targetAttribute' => 'id'],
             ['folder_id', 'exist', 'targetClass' => Folder::class, 'targetAttribute' => 'id'],
         ];
@@ -63,6 +65,7 @@ class Project extends ActiveRecord
             'documents_url' => 'Документы',
             'team_id' => 'Команда',
             'folder_id' => 'Папка',
+            'position' => 'Позиция',
             'created_at' => 'Создано',
             'updated_at' => 'Обновлено',
         ];

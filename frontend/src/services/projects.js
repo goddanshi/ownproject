@@ -29,5 +29,13 @@ export default {
   async deleteProject(id) {
     const response = await api.delete(`/projects/${id}`)
     return response.data
+  },
+
+  // Изменить порядок проектов
+  async reorderProjects(orderedIds) {
+    const response = await api.post('/projects/reorder', {
+      ordered_ids: orderedIds
+    })
+    return response.data
   }
 }

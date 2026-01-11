@@ -65,6 +65,7 @@ class ProjectsController extends Controller
                 'logo_url' => $project->logo_url,
                 'documents_url' => $project->documents_url,
                 'folder_id' => $project->folder_id,
+                'position' => $project->position,
                 'team' => [
                     'id' => $project->team->id,
                     'name' => $project->team->name,
@@ -74,6 +75,11 @@ class ProjectsController extends Controller
                 'created_at' => $project->created_at,
             ];
         }
+
+        // Сортируем проекты по позиции
+        usort($result, function($a, $b) {
+            return $a['position'] - $b['position'];
+        });
 
         return [
             'success' => true,
@@ -298,6 +304,48 @@ class ProjectsController extends Controller
             'success' => false,
             'message' => 'Ошибка удаления проекта'
         ];
+    }
+
+    // Изменить порядок проектов (drag-and-drop)
+    public function actionReorder()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $orderedIds = $data['ordered_ids'] ?? [];
+
+        if (empty($orderedIds)) {
+            return ['success' => false, 'message' => 'Не указан порядок проектов'];
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            foreach ($orderedIds as $position => $projectId) {
+                $project = Project::findOne($projectId);
+                if ($project) {
+                    $project->position = $position;
+                    $project->save(false);
+                }
+            }
+            $transaction->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Порядок проектов обновлен'
+            ];
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            return [
+                'success' => false,
+                'message' => 'Ошибка обновления порядка проектов',
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     // === Вспомогательные методы ===

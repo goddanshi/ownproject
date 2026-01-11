@@ -347,14 +347,26 @@ class FoldersController extends Controller
                     'children' => $this->buildFolderTree($folders, $folder->id),
                 ];
 
-                // Добавляем проекты в узел
-                foreach ($folder->projects as $project) {
+                // Добавляем проекты в узел (сортируем по позиции)
+                $projects = $folder->projects;
+                usort($projects, function($a, $b) {
+                    return $a->position - $b->position;
+                });
+
+                foreach ($projects as $project) {
                     $node['children'][] = [
                         'id' => $project->id,
                         'name' => $project->name,
                         'description' => $project->description,
                         'type' => 'project',
                         'tasks_count' => $project->getTasks()->count(),
+                        'start_date' => $project->start_date,
+                        'end_date' => $project->end_date,
+                        'website_url' => $project->website_url,
+                        'logo_url' => $project->logo_url,
+                        'documents_url' => $project->documents_url,
+                        'team_id' => $project->team_id,
+                        'folder_id' => $project->folder_id,
                     ];
                 }
 

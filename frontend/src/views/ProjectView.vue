@@ -100,39 +100,45 @@
         </div>
 
         <!-- Дополнительная информация о проекте -->
-        <div class="project-details" v-if="project.start_date || project.end_date || project.website_url || project.documents_url">
-          <div class="detail-item" v-if="project.start_date">
-            <span class="detail-icon">📅</span>
-            <div class="detail-content">
-              <span class="detail-label">Дата начала</span>
-              <span class="detail-value">{{ formatDate(project.start_date) }}</span>
+        <div class="project-details-toggle" v-if="project.start_date || project.end_date || project.documents_url">
+          <button class="toggle-btn" @click="showProjectDetails = !showProjectDetails">
+            <span class="toggle-label">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              </svg>
+              Дополнительная информация
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="chevron" :class="{ 'rotated': showProjectDetails }">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          <transition name="expand">
+            <div v-if="showProjectDetails" class="project-details-content">
+              <div class="details-grid">
+                <div class="detail-item" v-if="project.start_date">
+                  <div class="detail-content">
+                    <span class="detail-label">Дата начала</span>
+                    <span class="detail-value">{{ formatDate(project.start_date) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item" v-if="project.end_date">
+                  <div class="detail-content">
+                    <span class="detail-label">Дата завершения</span>
+                    <span class="detail-value">{{ formatDate(project.end_date) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item full-width" v-if="project.documents_url">
+                  <div class="detail-content">
+                    <span class="detail-label">Папка проекта</span>
+                    <a :href="project.documents_url" target="_blank" rel="noopener noreferrer" class="detail-link">
+                      Открыть папку с документами →
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="detail-item" v-if="project.end_date">
-            <span class="detail-icon">🏁</span>
-            <div class="detail-content">
-              <span class="detail-label">Дата завершения</span>
-              <span class="detail-value">{{ formatDate(project.end_date) }}</span>
-            </div>
-          </div>
-          <div class="detail-item" v-if="project.website_url">
-            <span class="detail-icon">🌐</span>
-            <div class="detail-content">
-              <span class="detail-label">Сайт проекта</span>
-              <a :href="project.website_url" target="_blank" rel="noopener noreferrer" class="detail-link">
-                {{ project.website_url }}
-              </a>
-            </div>
-          </div>
-          <div class="detail-item" v-if="project.documents_url">
-            <span class="detail-icon">📁</span>
-            <div class="detail-content">
-              <span class="detail-label">Документы</span>
-              <a :href="project.documents_url" target="_blank" rel="noopener noreferrer" class="detail-link">
-                Открыть папку с документами →
-              </a>
-            </div>
-          </div>
+          </transition>
         </div>
       </div>
 
@@ -277,6 +283,7 @@ const showTaskDetailsModal = ref(false)
 const selectedTask = ref(null)
 const selectedTaskId = ref(null)
 const showTeamInfo = ref(false)
+const showProjectDetails = ref(false)
 const trackingTasks = ref(new Set()) // Хранит ID задач с активным отслеживанием
 
 let unsubscribe = null
@@ -778,42 +785,40 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* Блок с деталями проекта */
-.project-details {
+/* Блок с дополнительной информацией проекта */
+.project-details-toggle {
   margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.project-details-content {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
 }
 
 .detail-item {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: #f9fafb;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+  flex-direction: column;
 }
 
-.detail-item:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.detail-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  line-height: 1;
+.detail-item.full-width {
+  grid-column: 1 / -1;
 }
 
 .detail-content {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
 }
 
 .detail-label {
@@ -823,7 +828,7 @@ onUnmounted(() => {
 }
 
 .detail-value {
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #1a1a1a;
   font-weight: 600;
 }
@@ -832,9 +837,8 @@ onUnmounted(() => {
   color: #2563eb;
   text-decoration: none;
   font-weight: 600;
-  word-break: break-all;
   transition: color 0.2s;
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
 .detail-link:hover {

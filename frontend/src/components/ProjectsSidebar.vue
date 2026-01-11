@@ -43,6 +43,7 @@
               :node="item"
               :level="0"
               :collapsed="isCollapsed"
+              :expandedNodes="expandedNodes"
               @toggle="toggleNode"
               @edit-folder="editFolder"
               @delete-folder="deleteFolder"
@@ -50,6 +51,8 @@
               @delete-project="deleteProject"
               @add-subfolder="addSubfolder"
               @add-project-to-folder="addProjectToFolder"
+              @drag-start="handleDragStart"
+              @drag-drop="handleDragDrop"
             />
 
             <!-- Проекты без папки (корневые) -->
@@ -59,8 +62,11 @@
               :node="project"
               :level="0"
               :collapsed="isCollapsed"
+              :expandedNodes="expandedNodes"
               @edit-project="editProject"
               @delete-project="deleteProject"
+              @drag-start="handleDragStart"
+              @drag-drop="handleDragDrop"
             />
 
             <!-- Пустое состояние -->
@@ -115,7 +121,21 @@ const editingFolder = ref(null)
 const editingProject = ref(null)
 const selectedParentId = ref(null)
 const selectedFolderId = ref(null)
-const expandedNodes = ref(new Set())
+
+// Загружаем сохраненное состояние раскрытых папок
+const loadExpandedNodes = () => {
+  const saved = localStorage.getItem('expanded-folders')
+  if (saved) {
+    try {
+      return new Set(JSON.parse(saved))
+    } catch (e) {
+      return new Set()
+    }
+  }
+  return new Set()
+}
+
+const expandedNodes = ref(loadExpandedNodes())
 
 const sidebarLeftPosition = computed(() => {
   return mainSidebarCollapsed.value ? '80px' : '280px'
@@ -203,6 +223,9 @@ const toggleNode = (nodeId) => {
   } else {
     expandedNodes.value.add(nodeId)
   }
+
+  // Сохраняем состояние в localStorage
+  localStorage.setItem('expanded-folders', JSON.stringify(Array.from(expandedNodes.value)))
 }
 
 const editFolder = (folder) => {
@@ -255,6 +278,57 @@ const addProjectToFolder = (folderId) => {
   editingProject.value = null
   selectedFolderId.value = folderId
   showProjectModal.value = true
+}
+
+// Drag and Drop handlers
+const handleDragStart = (node) => {
+  console.log('Начало перетаскивания:', node.name)
+}
+
+const handleDragDrop = async ({ draggedId, targetId }) => {
+  console.log('Перетаскивание:', draggedId, 'на', targetId)
+
+  // Собираем все проекты из дерева в плоский массив
+  const allProjects = []
+
+  // Рекурсивно собираем проекты
+  const collectProjects = (nodes) => {
+    for (const node of nodes) {
+      if (node.type === 'project') {
+        allProjects.push(node)
+      }
+      if (node.children && node.children.length > 0) {
+        collectProjects(node.children)
+      }
+    }
+  }
+
+  collectProjects(tree.value)
+  collectProjects(rootProjects.value)
+
+  // Находим индексы проектов
+  const draggedIndex = allProjects.findIndex(p => p.id === draggedId)
+  const targetIndex = allProjects.findIndex(p => p.id === targetId)
+
+  if (draggedIndex === -1 || targetIndex === -1) return
+
+  // Переставляем проекты
+  const draggedProject = allProjects[draggedIndex]
+  allProjects.splice(draggedIndex, 1)
+  allProjects.splice(targetIndex, 0, draggedProject)
+
+  // Формируем массив ID в новом порядке
+  const orderedIds = allProjects.map(p => p.id)
+
+  try {
+    const response = await projectsApi.reorderProjects(orderedIds)
+    if (response.success) {
+      // Перезагружаем данные для отображения нового порядка
+      await loadData()
+    }
+  } catch (error) {
+    console.error('Ошибка изменения порядка проектов:', error)
+  }
 }
 
 const loadData = async () => {

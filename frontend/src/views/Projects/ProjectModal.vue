@@ -26,6 +26,52 @@
           ></textarea>
         </div>
 
+        <div class="form-group">
+          <label>Дата начала</label>
+          <input
+            v-model="formData.startDate"
+            type="date"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Дата завершения</label>
+          <input
+            v-model="formData.endDate"
+            type="date"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Сайт</label>
+          <input
+            v-model="formData.websiteUrl"
+            type="url"
+            placeholder="https://example.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Логотип (ссылка на изображение)</label>
+          <input
+            v-model="formData.logoUrl"
+            type="url"
+            placeholder="https://example.com/logo.png"
+          />
+          <div v-if="formData.logoUrl" class="logo-preview">
+            <img :src="formData.logoUrl" alt="Превью логотипа" @error="handleImageError" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Папка с документами (ссылка на Google Drive и т.д.)</label>
+          <input
+            v-model="formData.documentsUrl"
+            type="url"
+            placeholder="https://drive.google.com/..."
+          />
+        </div>
+
         <div class="form-group" v-if="!project">
           <label>Команда *</label>
           <select v-model="formData.teamId" required>
@@ -72,12 +118,38 @@ const emit = defineEmits(['close', 'saved'])
 const formData = ref({
   name: '',
   description: '',
-  teamId: ''
+  teamId: '',
+  startDate: '',
+  endDate: '',
+  websiteUrl: '',
+  logoUrl: '',
+  documentsUrl: ''
 })
 
 const teams = ref([])
 const loading = ref(false)
 const error = ref('')
+
+// Функция конвертации timestamp в формат yyyy-MM-dd для input[type="date"]
+const timestampToDateInput = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp * 1000)
+  return date.toISOString().split('T')[0]
+}
+
+// Функция конвертации формата yyyy-MM-dd в timestamp
+const dateInputToTimestamp = (dateStr) => {
+  if (!dateStr) return null
+  const date = new Date(dateStr)
+  return Math.floor(date.getTime() / 1000)
+}
+
+const handleImageError = () => {
+  error.value = 'Не удалось загрузить изображение. Проверьте URL.'
+  setTimeout(() => {
+    error.value = ''
+  }, 3000)
+}
 
 const loadTeams = async () => {
   try {
@@ -95,18 +167,21 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
 
+    const data = {
+      name: formData.value.name,
+      description: formData.value.description,
+      start_date: dateInputToTimestamp(formData.value.startDate),
+      end_date: dateInputToTimestamp(formData.value.endDate),
+      website_url: formData.value.websiteUrl || null,
+      logo_url: formData.value.logoUrl || null,
+      documents_url: formData.value.documentsUrl || null,
+      team_id: parseInt(formData.value.teamId)
+    }
+
     if (props.project) {
-      await projectsApi.updateProject(
-        props.project.id,
-        formData.value.name,
-        formData.value.description
-      )
+      await projectsApi.updateProject(props.project.id, data)
     } else {
-      await projectsApi.createProject(
-        formData.value.name,
-        formData.value.description,
-        parseInt(formData.value.teamId)
-      )
+      await projectsApi.createProject(data)
     }
 
     emit('saved')
@@ -124,7 +199,12 @@ onMounted(() => {
     formData.value = {
       name: props.project.name,
       description: props.project.description || '',
-      teamId: props.project.team.id
+      teamId: props.project.team.id,
+      startDate: timestampToDateInput(props.project.start_date),
+      endDate: timestampToDateInput(props.project.end_date),
+      websiteUrl: props.project.website_url || '',
+      logoUrl: props.project.logo_url || '',
+      documentsUrl: props.project.documents_url || ''
     }
   }
 })
@@ -195,6 +275,8 @@ label {
 }
 
 input[type="text"],
+input[type="date"],
+input[type="url"],
 textarea,
 select {
   width: 100%;
@@ -272,5 +354,22 @@ textarea {
 
 .btn-secondary:hover {
   background: #f9f9f9;
+}
+
+.logo-preview {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-preview img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 </style>

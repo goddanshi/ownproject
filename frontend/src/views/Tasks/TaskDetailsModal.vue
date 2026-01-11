@@ -82,6 +82,10 @@
               <span class="label">Общее время:</span>
               <span>{{ formatDuration(task.total_time) }}</span>
             </div>
+            <div class="info-item" v-if="task.estimated_time">
+              <span class="label">Планируемые часы:</span>
+              <span>{{ formatEstimatedTime(task.estimated_time) }}</span>
+            </div>
           </div>
 
           <!-- Участники -->
@@ -126,6 +130,9 @@
                 >
                   {{ todo.title }}
                 </span>
+                <span v-if="todo.deadline" :class="['todo-deadline', { 'overdue': isOverdue(todo.deadline) }]">
+                  {{ formatDate(todo.deadline) }}
+                </span>
                 <button
                   @click="deleteTodo(todo.id)"
                   class="btn-delete-todo"
@@ -139,8 +146,14 @@
                   v-model="newTodoTitle"
                   @keyup.enter="addTodo"
                   type="text"
-                  placeholder="Добавить TODO..."
+                  placeholder="Название TODO..."
                   class="todo-input"
+                />
+                <input
+                  v-model="newTodoDeadline"
+                  type="date"
+                  class="todo-date-input"
+                  placeholder="Дедлайн"
                 />
                 <button
                   @click="addTodo"
@@ -263,6 +276,7 @@ const task = ref(null)
 const loading = ref(true)
 const isTracking = ref(false)
 const newTodoTitle = ref('')
+const newTodoDeadline = ref('')
 const $confirm = inject('$confirm')
 const selectedStatus = ref('1')
 const showReviewerModal = ref(false)
@@ -354,6 +368,17 @@ const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   return `${hours}ч ${minutes}м`
+}
+
+const formatEstimatedTime = (seconds) => {
+  if (!seconds) return '0ч'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (minutes > 0) {
+    return `${hours}ч ${minutes}м`
+  }
+  return `${hours}ч`
 }
 
 const handleStatusChange = async () => {
@@ -459,14 +484,28 @@ const addTodo = async () => {
   if (!newTodoTitle.value.trim()) return
 
   try {
-    const response = await tasksApi.createTodo(props.taskId, newTodoTitle.value.trim())
+    // Конвертируем дату в timestamp если указана
+    let deadline = null
+    if (newTodoDeadline.value) {
+      deadline = Math.floor(new Date(newTodoDeadline.value).getTime() / 1000)
+    }
+
+    const response = await tasksApi.createTodo(props.taskId, newTodoTitle.value.trim(), deadline)
     if (response.success) {
       newTodoTitle.value = ''
+      newTodoDeadline.value = ''
       loadTask()
     }
   } catch (error) {
     console.error('Ошибка добавления TODO:', error)
   }
+}
+
+// Проверка просрочки дедлайна
+const isOverdue = (deadline) => {
+  if (!deadline) return false
+  const now = Math.floor(Date.now() / 1000)
+  return deadline < now
 }
 
 const toggleTodo = async (todoId) => {
@@ -910,6 +949,18 @@ onMounted(() => {
   color: #999;
 }
 
+.todo-deadline {
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 500;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.todo-deadline.overdue {
+  font-weight: 600;
+}
+
 .btn-delete-todo {
   background: none;
   border: none;
@@ -938,7 +989,7 @@ onMounted(() => {
 }
 
 .todo-input {
-  flex: 1;
+  flex: 2;
   padding: 0.75rem;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -947,6 +998,20 @@ onMounted(() => {
 }
 
 .todo-input:focus {
+  outline: none;
+  border-color: #2d3748;
+}
+
+.todo-date-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.todo-date-input:focus {
   outline: none;
   border-color: #2d3748;
 }

@@ -204,6 +204,7 @@ class TasksController extends Controller
             $todos[] = [
                 'id' => $todo->id,
                 'title' => $todo->title,
+                'deadline' => $todo->deadline,
                 'is_completed' => (bool)$todo->is_completed,
                 'position' => $todo->position,
                 'created_at' => $todo->created_at,
@@ -716,6 +717,7 @@ class TasksController extends Controller
         $data = json_decode(Yii::$app->request->rawBody, true);
         $taskId = $data['task_id'] ?? null;
         $title = $data['title'] ?? null;
+        $deadline = $data['deadline'] ?? null;
 
         if (!$taskId || !$title) {
             return ['success' => false, 'message' => 'task_id и title обязательны'];
@@ -729,6 +731,7 @@ class TasksController extends Controller
         $todo = new TaskTodo();
         $todo->task_id = $taskId;
         $todo->title = trim($title);
+        $todo->deadline = $deadline;
         $todo->position = TaskTodo::getNextPosition($taskId);
         $todo->is_completed = false;
 
@@ -738,6 +741,7 @@ class TasksController extends Controller
                 'todo' => [
                     'id' => $todo->id,
                     'title' => $todo->title,
+                    'deadline' => $todo->deadline,
                     'is_completed' => (bool)$todo->is_completed,
                     'position' => $todo->position,
                     'created_at' => $todo->created_at,

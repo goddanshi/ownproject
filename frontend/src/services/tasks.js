@@ -44,6 +44,7 @@ export default {
       priority: taskData.priority,
       start_date: taskData.start_date,
       deadline: taskData.deadline,
+      estimated_time: taskData.estimated_time,
       reviewer_id: taskData.reviewer_id
     })
     return response.data
@@ -127,10 +128,11 @@ export default {
   // === Методы TODO ===
 
   // Создать TODO
-  async createTodo(taskId, title) {
+  async createTodo(taskId, title, deadline = null) {
     const response = await api.post('/tasks/create-todo', {
       task_id: taskId,
-      title
+      title,
+      deadline
     })
     return response.data
   },

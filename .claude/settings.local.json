@@ -8,7 +8,11 @@
       "Bash(findstr:*)",
       "Bash(docker-compose down:*)",
       "Bash(docker-compose up:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ssh -o ConnectTimeout=10 root@185.104.113.132 'sudo -u deploy ssh-keygen -t ed25519 -C \"\"github-actions-deploy\"\" -f /home/deploy/.ssh/github_deploy -N \"\"\"\"')",
+      "Bash(ssh root@185.104.113.132 'whoami')",
+      "Bash(find:*)",
+      "Bash(php yii migrate:*)"
     ],
     "deny": [],
     "ask": []

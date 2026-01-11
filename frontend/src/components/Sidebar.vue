@@ -123,6 +123,18 @@ const generalMenuItems = [
     permission: 'view_dashboard'
   },
   {
+    path: '/tasks',
+    label: 'Задачи',
+    icon: TasksIcon,
+    permission: 'view_tasks'
+  },
+  {
+    path: '/analytics',
+    label: 'Аналитика',
+    icon: AnalyticsIcon,
+    // permission: 'view_analytics'
+  },
+  {
     path: '/workers',
     label: 'Сотрудники',
     icon: EmploersIcon,
@@ -135,15 +147,10 @@ const generalMenuItems = [
     permission: 'view_teams' // Управление командами - для админов/тимлидов
   },
   {
-    path: '/tasks',
-    label: 'Задачи',
-    icon: TasksIcon,
-    permission: 'view_tasks'
-  },
-  {
-    path: '/leads',
-    label: 'Лиды',
-    icon: RequestIcon
+    path: '/my-team',
+    label: 'Моя команда',
+    icon: ComandsIcon,
+    permission: 'view_my_team'
   },
   {
     path: '/statistics',
@@ -152,20 +159,9 @@ const generalMenuItems = [
     // permission: 'view_statistics'
   },
   {
-    path: '/analytics',
-    label: 'Аналитика',
-    icon: AnalyticsIcon,
-    // permission: 'view_analytics'
-  }
-]
-
-// Личные пункты меню
-const personalMenuItems = [
-  {
-    path: '/my-team',
-    label: 'Моя команда',
-    icon: ComandsIcon,
-    permission: 'view_my_team'
+    path: '/leads',
+    label: 'Лиды',
+    icon: RequestIcon
   },
   {
     path: '/aichat',
@@ -173,6 +169,9 @@ const personalMenuItems = [
     icon: AiIcon,
   }
 ]
+
+// Личные пункты меню (теперь пустой, все перенесено в общие)
+const personalMenuItems = []
 
 // Пункт меню с проектами (отдельная секция)
 const projectsMenuItem = {

@@ -1,7 +1,24 @@
 <template>
-  <div class="tree-node" :style="{ paddingLeft: `${level * 20}px` }">
+  <div
+    class="tree-node"
+    :style="{ paddingLeft: `${level * 20}px` }"
+    @dragover.prevent="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
     <!-- Узел папки или проекта -->
-    <div class="node-content" :class="{ 'is-folder': node.type === 'folder', 'is-project': node.type === 'project' }">
+    <div
+      class="node-content"
+      :class="{
+        'is-folder': node.type === 'folder',
+        'is-project': node.type === 'project',
+        'drag-over': isDragOver && node.type === 'project',
+        'dragging': isDragging
+      }"
+      :draggable="node.type === 'project'"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd"
+    >
       <!-- Кнопка раскрытия (только для папок с детьми) -->
       <button
         v-if="node.type === 'folder' && node.children && node.children.length > 0"
@@ -80,6 +97,7 @@
           :node="child"
           :level="level + 1"
           :collapsed="collapsed"
+          :expandedNodes="expandedNodes"
           @toggle="$emit('toggle', $event)"
           @edit-folder="$emit('edit-folder', $event)"
           @delete-folder="$emit('delete-folder', $event)"
@@ -87,6 +105,8 @@
           @delete-project="$emit('delete-project', $event)"
           @add-subfolder="$emit('add-subfolder', $event)"
           @add-project-to-folder="$emit('add-project-to-folder', $event)"
+          @drag-start="$emit('drag-start', $event)"
+          @drag-drop="$emit('drag-drop', $event)"
         />
       </div>
     </transition>
@@ -110,6 +130,10 @@ const props = defineProps({
   collapsed: {
     type: Boolean,
     default: false
+  },
+  expandedNodes: {
+    type: Set,
+    default: () => new Set()
   }
 })
 
@@ -120,19 +144,74 @@ const emit = defineEmits([
   'edit-project',
   'delete-project',
   'add-subfolder',
-  'add-project-to-folder'
+  'add-project-to-folder',
+  'drag-start',
+  'drag-drop'
 ])
 
-const isExpanded = ref(false)
+const isDragging = ref(false)
+const isDragOver = ref(false)
+
+const isExpanded = computed(() => {
+  return props.expandedNodes.has(props.node.id)
+})
 
 const toggleExpand = () => {
-  isExpanded.value = !isExpanded.value
   emit('toggle', props.node.id)
 }
 
 const handleProjectClick = (event) => {
   console.log('Клик на проект:', props.node.name, 'ID:', props.node.id)
   event.stopPropagation()
+}
+
+// Drag and Drop handlers
+const handleDragStart = (event) => {
+  if (props.node.type !== 'project') return
+
+  isDragging.value = true
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    id: props.node.id,
+    type: props.node.type,
+    name: props.node.name
+  }))
+
+  emit('drag-start', props.node)
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+}
+
+const handleDragOver = (event) => {
+  if (props.node.type !== 'project') return
+
+  isDragOver.value = true
+}
+
+const handleDragLeave = () => {
+  isDragOver.value = false
+}
+
+const handleDrop = (event) => {
+  if (props.node.type !== 'project') return
+
+  event.preventDefault()
+  isDragOver.value = false
+
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('application/json'))
+
+    if (data.type === 'project' && data.id !== props.node.id) {
+      emit('drag-drop', {
+        draggedId: data.id,
+        targetId: props.node.id
+      })
+    }
+  } catch (e) {
+    console.error('Error parsing drag data:', e)
+  }
 }
 </script>
 
@@ -149,6 +228,20 @@ const handleProjectClick = (event) => {
   border-radius: 6px;
   transition: background 0.2s ease;
   position: relative;
+}
+
+.node-content.is-project {
+  cursor: grab;
+}
+
+.node-content.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.node-content.drag-over {
+  background: #e3f2fd;
+  border: 2px dashed #2196f3;
 }
 
 .node-content:hover {

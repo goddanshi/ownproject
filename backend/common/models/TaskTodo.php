@@ -12,6 +12,7 @@ use yii\behaviors\TimestampBehavior;
  * @property int $id
  * @property int $task_id
  * @property string $title
+ * @property int $deadline
  * @property bool $is_completed
  * @property int $position
  * @property int $created_at
@@ -36,7 +37,7 @@ class TaskTodo extends ActiveRecord
         return [
             [['task_id', 'title'], 'required'],
             ['title', 'string', 'max' => 500],
-            [['task_id', 'position'], 'integer'],
+            [['task_id', 'position', 'deadline'], 'integer'],
             ['is_completed', 'boolean'],
             ['is_completed', 'default', 'value' => false],
             ['position', 'default', 'value' => 0],
@@ -50,6 +51,7 @@ class TaskTodo extends ActiveRecord
             'id' => 'ID',
             'task_id' => 'ID задачи',
             'title' => 'Название',
+            'deadline' => 'Дедлайн',
             'is_completed' => 'Выполнено',
             'position' => 'Позиция',
             'created_at' => 'Создано',
