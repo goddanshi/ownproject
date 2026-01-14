@@ -1,11 +1,13 @@
 import api from './api'
 
 export default {
-  async register(username, email, password) {
+  async register(username, email, password, name, surname) {
     const response = await api.post('/api/register', {
       username,
       email,
-      password
+      password,
+      name,
+      surname
     })
 
     if (response.data.success && response.data.token) {

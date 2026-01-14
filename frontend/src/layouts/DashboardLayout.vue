@@ -13,6 +13,16 @@
         <div class="header-right">
           <div class="date-info">{{ currentDate }}</div>
 
+          <!-- Кнопка переключения темы -->
+          <button class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Светлая тема' : 'Темная тема'">
+            <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+            </svg>
+          </button>
+
           <!-- Кнопка настроек (проверка по праву manage_permissions) -->
           <div v-if="authStore.can('manage_permissions')" class="settings-dropdown" ref="settingsRef">
             <button class="settings-button" @click="toggleSettings">
@@ -76,6 +86,7 @@ const projectsSidebarOpen = ref(localStorage.getItem('projects-sidebar-open') ==
 const showSettings = ref(false)
 const showPermissionsModal = ref(false)
 const settingsRef = ref(null)
+const isDark = ref(localStorage.getItem('theme') === 'dark')
 
 const currentDate = computed(() => {
   const date = new Date()
@@ -87,6 +98,14 @@ const currentDate = computed(() => {
 })
 
 // Удалили isAdmin computed, теперь используем authStore.can('manage_permissions')
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+  const theme = isDark.value ? 'dark' : 'light'
+  localStorage.setItem('theme', theme)
+  document.documentElement.setAttribute('data-theme', theme)
+  console.log('Theme changed to:', theme, 'Attribute set:', document.documentElement.getAttribute('data-theme'))
+}
 
 const toggleSettings = () => {
   showSettings.value = !showSettings.value
@@ -113,6 +132,11 @@ const updateSidebarState = () => {
 }
 
 onMounted(() => {
+  // Применяем сохраненную тему при загрузке
+  const savedTheme = localStorage.getItem('theme') || 'light'
+  document.documentElement.setAttribute('data-theme', savedTheme)
+  isDark.value = savedTheme === 'dark'
+
   window.addEventListener('storage', updateSidebarState)
   document.addEventListener('click', handleClickOutside)
   updateSidebarState()
@@ -130,7 +154,7 @@ onMounted(() => {
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f5f7;
+  background: var(--bg-primary);
 }
 
 .main-content {
@@ -160,14 +184,14 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-left h1 {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   letter-spacing: -0.5px;
 }
 
@@ -179,11 +203,42 @@ onMounted(() => {
 
 .date-info {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   padding: 0.5rem 1rem;
-  background: #fafafa;
+  background: var(--bg-tertiary);
   border-radius: 6px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover svg {
+  color: var(--bg-secondary);
 }
 
 /* Settings Dropdown */
@@ -195,8 +250,8 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   padding: 0;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -206,19 +261,19 @@ onMounted(() => {
 }
 
 .settings-button:hover {
-  background: #2d3748;
-  border-color: #2d3748;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
 }
 
 .settings-button svg {
   width: 20px;
   height: 20px;
-  color: #666;
+  color: var(--text-secondary);
   transition: all 0.2s ease;
 }
 
 .settings-button:hover svg {
-  color: white;
+  color: var(--bg-secondary);
   transform: rotate(45deg);
 }
 
@@ -226,10 +281,10 @@ onMounted(() => {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-md);
   min-width: 220px;
   z-index: 100;
   overflow: hidden;
@@ -249,19 +304,19 @@ onMounted(() => {
 }
 
 .menu-item:hover {
-  background: #f5f5f7;
+  background: var(--bg-primary);
 }
 
 .menu-item svg {
   width: 18px;
   height: 18px;
-  color: #666;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .menu-item span {
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -279,16 +334,16 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .user-profile:hover {
-  border-color: #2d3748;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--shadow-sm);
 }
 
 .user-info {
@@ -301,12 +356,12 @@ onMounted(() => {
 .user-name {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .user-email {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .user-avatar {

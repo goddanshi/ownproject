@@ -12,6 +12,7 @@ class Lead extends ActiveRecord
     const STATUS_WAITING = 2;
     const STATUS_WORKING = 3;
     const STATUS_LOST = 4;
+    const STATUS_COLD = 5;
 
     const CONTACT_PHONE = 'phone';
     const CONTACT_WHATSAPP = 'whatsapp';
@@ -44,7 +45,7 @@ class Lead extends ActiveRecord
             [['contact_type'], 'string', 'max' => 50],
             [['audit_status', 'proposal_status'], 'string', 'max' => 20],
             ['status', 'default', 'value' => self::STATUS_NEW],
-            ['status', 'in', 'range' => [self::STATUS_NEW, self::STATUS_WAITING, self::STATUS_WORKING, self::STATUS_LOST]],
+            ['status', 'in', 'range' => [self::STATUS_NEW, self::STATUS_WAITING, self::STATUS_WORKING, self::STATUS_LOST, self::STATUS_COLD]],
             ['contact_type', 'in', 'range' => [self::CONTACT_PHONE, self::CONTACT_WHATSAPP, self::CONTACT_VK, self::CONTACT_TELEGRAM]],
             ['audit_status', 'default', 'value' => self::NOT_READY],
             ['audit_status', 'in', 'range' => [self::READY, self::NOT_READY]],
@@ -88,6 +89,7 @@ class Lead extends ActiveRecord
             self::STATUS_WAITING => 'Ждем ответа',
             self::STATUS_WORKING => 'Работаем',
             self::STATUS_LOST => 'Слился',
+            self::STATUS_COLD => 'Холодные',
         ];
         return $statuses[$this->status] ?? 'Неизвестно';
     }

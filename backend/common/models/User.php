@@ -60,8 +60,24 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [
+            // Обязательные поля
+            [['username', 'email', 'password_hash', 'auth_key', 'name', 'surname', 'role'], 'required'],
+
+            // Уникальные поля
+            ['username', 'unique'],
+            ['email', 'unique'],
+            ['email', 'email'],
+
+            // Статус
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+
+            // Роль
+            ['role', 'default', 'value' => self::ROLE_EMPLOYER],
+            ['role', 'in', 'range' => [self::ROLE_ADMIN, self::ROLE_TEAMLEAD, self::ROLE_EMPLOYER]],
+
+            // Опциональные поля
+            [['password_reset_token', 'verification_token', 'avatar'], 'safe'],
         ];
     }
 

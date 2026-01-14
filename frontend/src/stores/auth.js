@@ -123,8 +123,8 @@ export const useAuthStore = defineStore('auth', {
       return result
     },
 
-    async register(username, email, password) {
-      const result = await authApi.register(username, email, password)
+    async register(username, email, password, name, surname) {
+      const result = await authApi.register(username, email, password, name, surname)
       if (result.success) {
         this.user = result.user
         this.isAuthenticated = true

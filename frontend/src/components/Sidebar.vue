@@ -248,8 +248,8 @@ onMounted(() => {
 }
 
 .sidebar {
-  background: white;
-  border-right: 1px solid #e0e0e0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
   position: fixed;
   left: 0;
   top: 0;
@@ -259,7 +259,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
   z-index: 999;
 }
 
@@ -274,42 +274,42 @@ onMounted(() => {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: white;
-  border: 2px solid #2d3748;
-  color: #2d3748;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent-primary);
+  color: var(--accent-primary);
   font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--shadow-sm);
   z-index: 1000;
 }
 
 .toggle-btn:hover {
-  background: #2d3748;
-  color: white;
+  background: var(--accent-primary);
+  color: var(--bg-secondary);
   transform: scale(1.1);
 }
 
 .sidebar-logo {
   text-align: center;
   padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 1rem;
 }
 
 .logo-text {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .logo-short {
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .nav-menu {
@@ -330,14 +330,14 @@ onMounted(() => {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #999;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .menu-divider {
   border: none;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   margin: 0.5rem 0;
 }
 
@@ -348,7 +348,7 @@ onMounted(() => {
   padding: 1rem;
   border-radius: 6px;
   text-decoration: none;
-  color: #555;
+  color: var(--text-secondary);
   font-weight: 500;
   transition: all 0.2s ease;
   background: transparent;
@@ -368,12 +368,12 @@ onMounted(() => {
 }
 
 .nav-item:hover {
-  background: #f5f5f7;
+  background: var(--bg-primary);
 }
 
 .nav-item.active {
-  background: #2d3748;
-  color: white;
+  background: var(--accent-primary);
+  color: var(--bg-secondary);
 }
 
 .nav-item .arrow {
@@ -409,7 +409,7 @@ onMounted(() => {
   padding: 1rem;
   border: none;
   border-radius: 6px;
-  background: #fef2f2;
+  background: rgba(254, 242, 242, 0.8);
   color: #991b1b;
   font-weight: 500;
   cursor: pointer;
@@ -423,7 +423,7 @@ onMounted(() => {
 }
 
 .logout-btn:hover {
-  background: #fee2e2;
+  background: rgba(254, 226, 226, 1);
 }
 
 .fade-enter-active, .fade-leave-active {

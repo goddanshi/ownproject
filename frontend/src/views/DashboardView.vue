@@ -50,9 +50,9 @@
                   </svg>
                 </div>
               </div>
-              <div class="stat-value">42</div>
+              <div class="stat-value">{{ leads.length }}</div>
               <div class="stat-footer">
-                <span class="stat-change urgent">8 требуют внимания</span>
+                <span class="stat-change urgent">{{ activeLeads.length }} требуют внимания</span>
               </div>
             </div>
           </div>
@@ -129,6 +129,7 @@ import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../stores/auth.js'
 import usersApi from '../services/employers.js'
 import tasksApi from '../services/tasks'
+import leadsApi from '../services/leads'
 
 const authStore = useAuthStore()
 
@@ -136,6 +137,10 @@ const loading = ref(true)
 const profilesData = ref([])
 const tasks = ref([])
 const activeTasks = ref([])
+const leads = ref([])
+const activeLeads = computed(() => {
+  return leads.value.filter(lead => lead.status === 1 || lead.status === 2)
+})
 
 const currentDate = computed(() => {
   const date = new Date()
@@ -202,9 +207,25 @@ const loadTasks = async () => {
   }
 }
 
+const loadLeads = async () => {
+  try {
+    const result = await leadsApi.getLeads()
+
+    if (result.success) {
+      leads.value = Array.isArray(result.leads) ? result.leads : []
+    } else {
+      leads.value = []
+    }
+  } catch (error) {
+    console.error('Failed to load leads:', error)
+    leads.value = []
+  }
+}
+
 onMounted(() => {
   loadProfiles()
   loadTasks()
+  loadLeads()
 })
 </script>
 

@@ -130,7 +130,8 @@ const statuses = [
   { id: 1, label: 'Новый' },
   { id: 2, label: 'Ждем ответа' },
   { id: 3, label: 'Работаем' },
-  { id: 4, label: 'Слился' }
+  { id: 4, label: 'Слился' },
+  { id: 5, label: 'Холодные' }
 ]
 
 const loadLeads = async () => {
@@ -294,7 +295,7 @@ onMounted(() => {
 
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1.5rem;
   flex: 1;
   min-height: 0;

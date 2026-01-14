@@ -75,6 +75,7 @@
                 <option :value="2">Ждем ответа</option>
                 <option :value="3">Работаем</option>
                 <option :value="4">Слился</option>
+                <option :value="5">Холодные</option>
               </select>
             </div>
 

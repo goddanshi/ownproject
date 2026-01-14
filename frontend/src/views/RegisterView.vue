@@ -41,6 +41,32 @@
         </div>
 
         <div class="form-group">
+          <label for="name">Имя</label>
+          <input
+            id="name"
+            v-model="name"
+            type="text"
+            placeholder="Введите имя"
+            required
+            autocomplete="given-name"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="surname">Фамилия</label>
+          <input
+            id="surname"
+            v-model="surname"
+            type="text"
+            placeholder="Введите фамилию"
+            required
+            autocomplete="family-name"
+            :disabled="loading"
+          />
+        </div>
+
+        <div class="form-group">
           <label for="password">Пароль</label>
           <input
             id="password"
@@ -98,6 +124,8 @@ const authStore = useAuthStore()
 
 const username = ref('')
 const email = ref('')
+const name = ref('')
+const surname = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const loading = ref(false)
@@ -115,7 +143,7 @@ const handleRegister = async () => {
   message.value = ''
 
   try {
-    const result = await authStore.register(username.value, email.value, password.value)
+    const result = await authStore.register(username.value, email.value, password.value, name.value, surname.value)
 
     if (result.success) {
       message.value = 'Регистрация успешна! Перенаправление...'

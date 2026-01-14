@@ -388,7 +388,7 @@ onUnmounted(() => {
 
 .message-text {
   padding: 0.75rem 1rem;
-  background: white;
+  background: blueviolet;
   border-radius: 12px;
   word-wrap: break-word;
   word-break: break-word;

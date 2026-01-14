@@ -45,6 +45,9 @@ class ApiController extends Controller
         $user = new User();
         $user->username = $data['username'] ?? '';
         $user->email = $data['email'] ?? '';
+        $user->name = $data['name'] ?? '';
+        $user->surname = $data['surname'] ?? '';
+        $user->role = User::ROLE_EMPLOYER; // По умолчанию роль сотрудника
         $user->setPassword($data['password'] ?? '');
         $user->generateAuthKey();
         $user->status = User::STATUS_ACTIVE;
@@ -65,6 +68,8 @@ class ApiController extends Controller
                     'email' => $user->email,
                     'role' => $user->role,
                     'avatar' => $user->avatar,
+                    'name' => $user->name,
+                    'surname' => $user->surname,
                 ]
             ];
         }
