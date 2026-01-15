@@ -90,7 +90,14 @@
 
           <!-- Участники -->
           <div class="section">
-            <h3>Участники ({{ task.assignees.length }})</h3>
+            <div class="section-header">
+              <h3>Участники ({{ task.assignees.length }})</h3>
+              <button class="btn-edit-small" @click="editTask" title="Управление исполнителями">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                </svg>
+              </button>
+            </div>
             <div class="assignees-list">
               <div
                 v-for="assignee in task.assignees"
@@ -518,25 +525,19 @@ const toggleTodo = async (todoId) => {
 }
 
 const deleteTodo = async (todoId) => {
-  try {
-    await $confirm({
-      title: 'Удаление TODO',
-      message: 'Вы уверены, что хотите удалить этот пункт?',
-      confirmText: 'Удалить',
-      cancelText: 'Отмена',
-      type: 'danger'
-    })
+  if (!confirm('Вы уверены, что хотите удалить этот пункт?')) {
+    return
+  }
 
+  try {
     const response = await tasksApi.deleteTodo(todoId)
     if (response.success) {
       loadTask()
+    } else {
+      console.error('Ошибка удаления TODO:', response.message)
     }
-  } catch (rejected) {
-    if (rejected === false) {
-      // Пользователь отменил
-      return
-    }
-    console.error('Ошибка удаления TODO:', rejected)
+  } catch (error) {
+    console.error('Ошибка удаления TODO:', error)
   }
 }
 
@@ -908,6 +909,29 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.btn-edit-small {
+  padding: 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-edit-small:hover {
+  background: #e5e7eb;
+  border-color: #2d3748;
+}
+
+.btn-edit-small svg {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
 }
 
 .todos-list {

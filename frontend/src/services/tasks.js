@@ -50,6 +50,15 @@ export default {
     return response.data
   },
 
+  // Обновить статус задачи
+  async updateTaskStatus(taskId, status) {
+    const response = await api.post('/tasks/update-status', {
+      task_id: taskId,
+      status
+    })
+    return response.data
+  },
+
   // Удалить задачу
   async deleteTask(id) {
     const response = await api.delete(`/tasks/${id}`)

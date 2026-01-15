@@ -373,6 +373,59 @@ class TasksController extends Controller
         ];
     }
 
+    // Быстрое обновление статуса задачи
+    public function actionUpdateStatus()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $data = json_decode(Yii::$app->request->rawBody, true);
+        $taskId = $data['task_id'] ?? null;
+        $newStatus = $data['status'] ?? null;
+
+        if (!$taskId || !$newStatus) {
+            return ['success' => false, 'message' => 'Необходимо указать task_id и status'];
+        }
+
+        $task = Task::findOne($taskId);
+        if (!$task) {
+            return ['success' => false, 'message' => 'Задача не найдена'];
+        }
+
+        $oldStatus = $task->status;
+        $task->status = $newStatus;
+
+        if (!$task->save()) {
+            return [
+                'success' => false,
+                'message' => 'Ошибка обновления статуса',
+                'errors' => $task->errors
+            ];
+        }
+
+        // Создаем системное сообщение о смене статуса
+        if ($oldStatus != $task->status) {
+            TaskMessage::createSystemMessage($task->id, $user->id, 'status_changed', [
+                'old_status' => $oldStatus,
+                'new_status' => $task->status,
+            ]);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Статус задачи обновлен',
+            'task' => [
+                'id' => $task->id,
+                'status' => $task->status,
+                'status_label' => $task->getStatusLabel()
+            ]
+        ];
+    }
+
     // Удалить задачу
     public function actionDelete()
     {
@@ -847,7 +900,7 @@ class TasksController extends Controller
     /**
      * Удалить TODO элемент
      */
-    public function actionDeleteTodo()
+    public function actionDeleteTodo($id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -856,7 +909,8 @@ class TasksController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        $todoId = Yii::$app->request->get('id');
+        // Получаем ID из параметра URL или из GET параметра
+        $todoId = $id ?? Yii::$app->request->get('id');
 
         if (!$todoId) {
             return ['success' => false, 'message' => 'id обязателен'];

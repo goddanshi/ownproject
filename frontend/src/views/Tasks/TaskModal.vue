@@ -92,8 +92,8 @@
           <small class="help-text">Укажите ориентировочное время выполнения задачи в часах</small>
         </div>
 
-        <div class="form-group" v-if="!task && projectParticipants.length > 0">
-          <label>Участники</label>
+        <div class="form-group" v-if="projectParticipants.length > 0">
+          <label>Исполнители</label>
           <div class="participants-list">
             <label
               v-for="participant in projectParticipants"
@@ -174,6 +174,7 @@ const handleSubmit = async () => {
       : null
 
     if (props.task) {
+      // Обновляем задачу
       await tasksApi.updateTask(props.task.id, {
         title: formData.value.title,
         description: formData.value.description,
@@ -183,6 +184,9 @@ const handleSubmit = async () => {
         deadline,
         estimated_time: estimatedTime
       })
+
+      // Синхронизируем исполнителей
+      await syncAssignees()
     } else {
       await tasksApi.createTask({
         title: formData.value.title,
@@ -221,6 +225,37 @@ const loadProjectParticipants = async (projectId) => {
   }
 }
 
+const syncAssignees = async () => {
+  if (!props.task) return
+
+  const currentAssigneeIds = (props.task.assignees || []).map(a => a.id)
+  const newAssigneeIds = formData.value.assigneeIds
+
+  // Находим кого нужно добавить
+  const toAdd = newAssigneeIds.filter(id => !currentAssigneeIds.includes(id))
+
+  // Находим кого нужно удалить
+  const toRemove = currentAssigneeIds.filter(id => !newAssigneeIds.includes(id))
+
+  // Добавляем новых исполнителей
+  for (const userId of toAdd) {
+    try {
+      await tasksApi.assignUser(props.task.id, userId)
+    } catch (err) {
+      console.error('Ошибка назначения пользователя:', err)
+    }
+  }
+
+  // Удаляем исполнителей
+  for (const userId of toRemove) {
+    try {
+      await tasksApi.unassignUser(props.task.id, userId)
+    } catch (err) {
+      console.error('Ошибка снятия назначения:', err)
+    }
+  }
+}
+
 watch(() => formData.value.projectId, (newProjectId) => {
   if (newProjectId && !props.task) {
     loadProjectParticipants(newProjectId)
@@ -256,9 +291,9 @@ onMounted(async () => {
       estimatedHours: props.task.estimated_time
         ? (props.task.estimated_time / 3600).toFixed(1)
         : null,
-      assigneeIds: []
+      assigneeIds: (props.task.assignees || []).map(a => a.id)
     }
-    loadProjectParticipants(formData.value.projectId)
+    await loadProjectParticipants(formData.value.projectId)
   } else if (props.projectId) {
     // Если передан projectId, устанавливаем его
     formData.value.projectId = props.projectId

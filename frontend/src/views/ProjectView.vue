@@ -183,9 +183,18 @@
             <div class="task-main" @click="openTaskDetails(task.id)">
               <div class="task-title-section">
                 <h4 class="task-name">{{ task.title }}</h4>
-                <span :class="['status-badge', `status-${task.status}`]">
-                  {{ getStatusLabel(task.status) }}
-                </span>
+                <select
+                  :value="task.status"
+                  @change="updateTaskStatus(task.id, $event.target.value)"
+                  @click.stop
+                  :class="['status-select', `status-${task.status}`]"
+                >
+                  <option value="1">Новая</option>
+                  <option value="2">В работе</option>
+                  <option value="3">На проверке</option>
+                  <option value="4">Завершена</option>
+                  <option value="5">Отменена</option>
+                </select>
               </div>
 
               <div class="task-info-grid">
@@ -274,10 +283,18 @@
                     <span v-else class="not-assigned-text">Не назначен</span>
                   </div>
                 </td>
-                <td class="col-status" @click="openTaskDetails(task.id)">
-                  <span :class="['status-badge', `status-${task.status}`]">
-                    {{ getStatusLabel(task.status) }}
-                  </span>
+                <td class="col-status" @click.stop>
+                  <select
+                    :value="task.status"
+                    @change="updateTaskStatus(task.id, $event.target.value)"
+                    :class="['status-select', `status-${task.status}`]"
+                  >
+                    <option value="1">Новая</option>
+                    <option value="2">В работе</option>
+                    <option value="3">На проверке</option>
+                    <option value="4">Завершена</option>
+                    <option value="5">Отменена</option>
+                  </select>
                 </td>
                 <td class="col-priority" @click="openTaskDetails(task.id)">
                   <span :class="['priority-badge', `priority-${task.priority}`]">
@@ -560,6 +577,30 @@ const getPriorityLabel = (priority) => {
 
 const handleLogoError = (event) => {
   event.target.style.display = 'none'
+}
+
+const updateTaskStatus = async (taskId, newStatus) => {
+  try {
+    const result = await tasksApi.updateTaskStatus(taskId, parseInt(newStatus))
+
+    if (result.success) {
+      // Обновляем статус задачи локально
+      const taskIndex = project.value.tasks.findIndex(t => t.id === taskId)
+      if (taskIndex !== -1) {
+        project.value.tasks[taskIndex].status = parseInt(newStatus)
+        // Принудительно обновляем реактивность
+        project.value = { ...project.value }
+      }
+    } else {
+      console.error('Ошибка обновления статуса:', result.message)
+      // Перезагружаем проект в случае ошибки
+      await loadProject()
+    }
+  } catch (error) {
+    console.error('Ошибка обновления статуса задачи:', error)
+    // Перезагружаем проект в случае ошибки
+    await loadProject()
+  }
 }
 
 // Следим за изменением ID проекта в URL
@@ -1158,6 +1199,27 @@ onUnmounted(() => {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.status-select {
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.status-select:hover {
+  opacity: 0.8;
+  border-color: currentColor;
+}
+
+.status-select:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .status-1 { background: #dbeafe; color: #1e40af; }
