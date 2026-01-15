@@ -165,7 +165,9 @@ export default {
 
   // Удалить TODO
   async deleteTodo(todoId) {
-    const response = await api.delete(`/tasks/delete-todo/${todoId}`)
+    const response = await api.delete('/tasks/delete-todo', {
+      params: { id: todoId }
+    })
     return response.data
   }
 }
