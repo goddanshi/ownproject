@@ -266,22 +266,33 @@ class FoldersController extends Controller
      */
     public function actionDelete($id)
     {
-        $user = Yii::$app->user->identity;
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
-            return [
-                'success' => false,
-                'message' => 'Пользователь не авторизован',
-            ];
+            return ['success' => false, 'message' => 'Unauthorized'];
         }
 
         try {
             $folder = Folder::findOne($id);
 
+            if (!$folder) {
+                return [
+                    'success' => false,
+                    'message' => 'Папка не найдена',
+                ];
+            }
+
+            // Проверка прав доступа
+            if (!$this->canManageFolder($folder, $user)) {
+                return ['success' => false, 'message' => 'Access denied'];
+            }
+
             if (!$folder->delete()) {
                 return [
                     'success' => false,
                     'message' => 'Ошибка удаления папки',
+                    'errors' => $folder->errors,
                 ];
             }
 
@@ -293,7 +304,7 @@ class FoldersController extends Controller
             Yii::error('Ошибка удаления папки: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Ошибка удаления папки: ' . $e->getMessage(),
             ];
         }
     }
@@ -320,6 +331,11 @@ class FoldersController extends Controller
         // Админ может управлять всеми папками
         if ($user->role === 1) {
             return true;
+        }
+
+        // Если папка не привязана к команде, управлять может создатель
+        if (!$folder->team_id) {
+            return $folder->created_by === $user->id;
         }
 
         // Тимлид команды может управлять папками своей команды
