@@ -138,8 +138,8 @@ class TeamsController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        // Только админ может создавать команды
-        if ($user->role != User::ROLE_ADMIN) {
+        // Админ и тимлиды могут создавать команды
+        if ($user->role != User::ROLE_ADMIN && $user->role != User::ROLE_TEAMLEAD) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 

@@ -115,8 +115,8 @@ class WorkersController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        // Только админ может создавать работников
-        if ($user->role != User::ROLE_ADMIN) {
+        // Админ и тимлиды могут создавать работников
+        if ($user->role != User::ROLE_ADMIN && $user->role != User::ROLE_TEAMLEAD) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 
@@ -168,8 +168,8 @@ class WorkersController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        // Только админ может обновлять работников
-        if ($user->role != User::ROLE_ADMIN) {
+        // Админ и тимлиды могут обновлять работников
+        if ($user->role != User::ROLE_ADMIN && $user->role != User::ROLE_TEAMLEAD) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 
@@ -212,8 +212,8 @@ class WorkersController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        // Только админ может удалять работников
-        if ($user->role != User::ROLE_ADMIN) {
+        // Админ и тимлиды могут удалять работников
+        if ($user->role != User::ROLE_ADMIN && $user->role != User::ROLE_TEAMLEAD) {
             return ['success' => false, 'message' => 'Access denied'];
         }
 

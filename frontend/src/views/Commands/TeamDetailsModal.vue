@@ -498,7 +498,7 @@ onMounted(async () => {
 }
 
 .member-card.teamlead .member-info .name {
-  color: white;
+  /* color: white; */
 }
 
 .member-info .email {
@@ -507,7 +507,7 @@ onMounted(async () => {
 }
 
 .member-card.teamlead .member-info .email {
-  color: rgba(255, 255, 255, 0.8);
+  /* color: rgba(255, 255, 255, 0.8); */
 }
 
 .member-info .full-name {
@@ -517,7 +517,7 @@ onMounted(async () => {
 }
 
 .member-card.teamlead .member-info .full-name {
-  color: rgba(255, 255, 255, 0.7);
+  /* color: rgba(255, 255, 255, 0.7); */
 }
 
 .btn-remove {

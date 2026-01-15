@@ -162,7 +162,8 @@ class UserController extends Controller
         $user->setPassword($data['newPassword']);
         $user->generateAuthKey();
 
-        if ($user->save()) {
+        // Сохраняем без валидации (только пароль и auth_key)
+        if ($user->save(false)) {
             // Генерируем новый токен
             $newToken = JwtHelper::generateToken($user->id, $user->username, $user->email);
 
