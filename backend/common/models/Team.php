@@ -154,28 +154,7 @@ class Team extends ActiveRecord
             return [];
         }
 
-        // Админ видит все команды
-        if ($user->role == User::ROLE_ADMIN) {
-            return self::find()->with(['teamlead', 'members'])->all();
-        }
-
-        // Тимлид видит только свои команды
-        if ($user->role == User::ROLE_TEAMLEAD) {
-            return self::find()
-                ->where(['teamlead_id' => $user->id])
-                ->with(['teamlead', 'members'])
-                ->all();
-        }
-
-        // Сотрудник видит команды, где он участник
-        if ($user->role == User::ROLE_EMPLOYER) {
-            return self::find()
-                ->joinWith('teamMembers')
-                ->where(['team_members.user_id' => $user->id])
-                ->with(['teamlead', 'members'])
-                ->all();
-        }
-
-        return [];
+        // Все авторизованные пользователи видят все команды
+        return self::find()->with(['teamlead', 'members'])->all();
     }
 }

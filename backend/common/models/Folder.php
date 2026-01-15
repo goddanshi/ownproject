@@ -175,36 +175,8 @@ class Folder extends ActiveRecord
             return [];
         }
 
-        // Админ видит все папки
-        if ($user->role === 1) {
-            return self::find()->with(['team', 'parent', 'children', 'projects'])->all();
-        }
-
-        // Получаем команды, в которых пользователь является участником или тимлидом
-        $teamIds = [];
-
-        // Команды где пользователь - тимлид
-        $leadTeams = Team::find()->where(['teamlead_id' => $user->id])->select('id')->column();
-        $teamIds = array_merge($teamIds, $leadTeams);
-
-        // Команды где пользователь - участник
-        $memberTeams = TeamMember::find()
-            ->where(['user_id' => $user->id])
-            ->select('team_id')
-            ->column();
-        $teamIds = array_merge($teamIds, $memberTeams);
-
-        $teamIds = array_unique($teamIds);
-
-        // Получаем папки: либо в командах пользователя, либо созданные пользователем
-        return self::find()
-            ->where([
-                'or',
-                ['team_id' => $teamIds],
-                ['created_by' => $user->id]
-            ])
-            ->with(['team', 'parent', 'children', 'projects'])
-            ->all();
+        // Все авторизованные пользователи видят все папки
+        return self::find()->with(['team', 'parent', 'children', 'projects'])->all();
     }
 
     /**
