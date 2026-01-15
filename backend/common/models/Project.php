@@ -138,7 +138,34 @@ class Project extends ActiveRecord
             return [];
         }
 
-        // Возвращаем все проекты (управление правами через RBAC)
-        return self::find()->with(['team', 'tasks'])->all();
+        // Админ видит все проекты
+        if ($user->role === 1) {
+            return self::find()->with(['team', 'tasks'])->all();
+        }
+
+        // Получаем команды, в которых пользователь является участником или тимлидом
+        $teamIds = [];
+
+        // Команды где пользователь - тимлид
+        $leadTeams = Team::find()->where(['teamlead_id' => $user->id])->select('id')->column();
+        $teamIds = array_merge($teamIds, $leadTeams);
+
+        // Команды где пользователь - участник
+        $memberTeams = TeamMember::find()
+            ->where(['user_id' => $user->id])
+            ->select('team_id')
+            ->column();
+        $teamIds = array_merge($teamIds, $memberTeams);
+
+        $teamIds = array_unique($teamIds);
+
+        if (empty($teamIds)) {
+            return [];
+        }
+
+        return self::find()
+            ->where(['team_id' => $teamIds])
+            ->with(['team', 'tasks'])
+            ->all();
     }
 }

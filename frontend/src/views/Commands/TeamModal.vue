@@ -168,10 +168,13 @@ const handleSubmit = async () => {
       )
     } else {
       // Создание команды
+      // Если пользователь не админ, автоматически устанавливаем его как тимлида
+      const teamleadId = authStore.isAdmin ? form.value.teamlead_id : authStore.user.id
+
       result = await teamsApi.createTeam(
         form.value.name,
         form.value.description,
-        form.value.teamlead_id,
+        teamleadId,
         form.value.member_ids
       )
     }

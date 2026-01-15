@@ -196,8 +196,13 @@ class Folder extends ActiveRecord
 
         $teamIds = array_unique($teamIds);
 
+        // Получаем папки: либо в командах пользователя, либо созданные пользователем
         return self::find()
-            ->where(['team_id' => $teamIds])
+            ->where([
+                'or',
+                ['team_id' => $teamIds],
+                ['created_by' => $user->id]
+            ])
             ->with(['team', 'parent', 'children', 'projects'])
             ->all();
     }
