@@ -19,6 +19,7 @@
             <option value="1">Администраторы</option>
             <option value="2">Тимлиды</option>
             <option value="3">Сотрудники</option>
+            <option value="4">Менеджеры по продажам</option>
           </select>
 
           <button
@@ -197,7 +198,8 @@ const getRoleLabel = (role) => {
   const roles = {
     1: 'Администратор',
     2: 'Тимлид',
-    3: 'Сотрудник'
+    3: 'Сотрудник',
+    4: 'Менеджер по продажам'
   }
   return roles[role] || 'Неизвестно'
 }
@@ -207,7 +209,8 @@ const getRoleClass = (role) => {
   const classes = {
     1: 'admin',
     2: 'teamlead',
-    3: 'employee'
+    3: 'employee',
+    4: 'sales-manager'
   }
   return classes[role] || ''
 }
@@ -513,6 +516,11 @@ onMounted(() => {
 .role-badge.employee {
   background: #f0fdf4;
   color: #166534;
+}
+
+.role-badge.sales-manager {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .actions-cell {

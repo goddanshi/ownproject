@@ -66,6 +66,7 @@
               <option value="1">Администратор</option>
               <option value="2">Тимлид</option>
               <option value="3">Сотрудник</option>
+              <option value="4">Менеджер по продажам</option>
             </select>
           </div>
 
