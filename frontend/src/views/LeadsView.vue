@@ -127,11 +127,11 @@ const selectedLead = ref(null)
 const selectedLeadId = ref(null)
 
 const statuses = [
+  { id: 5, label: 'Холодные' },
   { id: 1, label: 'Новый' },
   { id: 2, label: 'Ждем ответа' },
   { id: 3, label: 'Работаем' },
-  { id: 4, label: 'Слился' },
-  { id: 5, label: 'Холодные' }
+  { id: 4, label: 'Слился' }
 ]
 
 const loadLeads = async () => {

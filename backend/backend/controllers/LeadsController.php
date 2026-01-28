@@ -72,9 +72,15 @@ class LeadsController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        $leads = Lead::find()
-            ->orderBy(['created_at' => SORT_DESC])
-            ->all();
+        $query = Lead::find();
+
+        // Менеджеры по продажам (role = 4) видят только свои лиды
+        // Админы (role = 1) видят все лиды
+        if ($user->role == 4) {
+            $query->andWhere(['created_by' => $user->id]);
+        }
+
+        $leads = $query->orderBy(['created_at' => SORT_DESC])->all();
 
         $result = [];
         foreach ($leads as $lead) {
@@ -102,6 +108,11 @@ class LeadsController extends Controller
         $lead = Lead::findOne($id);
         if (!$lead) {
             return ['success' => false, 'message' => 'Лид не найден'];
+        }
+
+        // Менеджеры по продажам могут видеть только свои лиды
+        if ($user->role == 4 && $lead->created_by != $user->id) {
+            return ['success' => false, 'message' => 'Доступ запрещен'];
         }
 
         return [
@@ -171,6 +182,11 @@ class LeadsController extends Controller
             return ['success' => false, 'message' => 'Лид не найден'];
         }
 
+        // Менеджеры по продажам могут редактировать только свои лиды
+        if ($user->role == 4 && $lead->created_by != $user->id) {
+            return ['success' => false, 'message' => 'Доступ запрещен'];
+        }
+
         $data = Yii::$app->request->post();
 
         if (isset($data['date'])) $lead->date = $data['date'];
@@ -216,6 +232,11 @@ class LeadsController extends Controller
         $lead = Lead::findOne($id);
         if (!$lead) {
             return ['success' => false, 'message' => 'Лид не найден'];
+        }
+
+        // Менеджеры по продажам могут удалять только свои лиды
+        if ($user->role == 4 && $lead->created_by != $user->id) {
+            return ['success' => false, 'message' => 'Доступ запрещен'];
         }
 
         if ($lead->delete()) {

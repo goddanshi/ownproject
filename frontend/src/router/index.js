@@ -8,7 +8,10 @@ const router = createRouter({
       path: '/',
       redirect: (to) => {
         const authStore = useAuthStore()
-        return authStore.isAuthenticated ? '/dashboard' : '/login'
+        if (!authStore.isAuthenticated) return '/login'
+        // Менеджеры по продажам всегда на страницу лидов
+        if (authStore.isSalesManager) return '/leads'
+        return '/dashboard'
       }
     },
     {
@@ -117,9 +120,13 @@ router.beforeEach(async (to, from, next) => {
   if (requiresAuth && !isAuthenticated) {
     next('/login')
   }
-  // Гостевой роут + авторизован → на dashboard
+  // Гостевой роут + авторизован → на dashboard (или leads для менеджеров)
   else if (isGuestRoute && isAuthenticated) {
-    next('/dashboard')
+    next(authStore.isSalesManager ? '/leads' : '/dashboard')
+  }
+  // Менеджер по продажам может заходить ТОЛЬКО на /leads и /profile
+  else if (authStore.isSalesManager && to.path !== '/leads' && to.path !== '/profile') {
+    next('/leads')
   }
   // Проверка прав доступа
   else if (requiredPermission && !authStore.can(requiredPermission)) {
