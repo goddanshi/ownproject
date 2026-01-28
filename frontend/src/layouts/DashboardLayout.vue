@@ -66,7 +66,7 @@
       </div>
     </main>
 
-    <ProjectsSidebar />
+    <ProjectsSidebar v-if="!authStore.isSalesManager" />
 
     <PermissionsModal v-if="showPermissionsModal" @close="closePermissionsModal" />
   </div>
