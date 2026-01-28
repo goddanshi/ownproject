@@ -36,6 +36,7 @@ class User extends ActiveRecord implements IdentityInterface
     const ROLE_ADMIN = 1;
     const ROLE_TEAMLEAD = 2;
     const ROLE_EMPLOYER = 3;
+    const ROLE_SALES_MANAGER = 4;
     /**
      * {@inheritdoc}
      */
@@ -74,7 +75,7 @@ class User extends ActiveRecord implements IdentityInterface
 
             // Роль
             ['role', 'default', 'value' => self::ROLE_EMPLOYER],
-            ['role', 'in', 'range' => [self::ROLE_ADMIN, self::ROLE_TEAMLEAD, self::ROLE_EMPLOYER]],
+            ['role', 'in', 'range' => [self::ROLE_ADMIN, self::ROLE_TEAMLEAD, self::ROLE_EMPLOYER, self::ROLE_SALES_MANAGER]],
 
             // Опциональные поля
             [['password_reset_token', 'verification_token', 'avatar'], 'safe'],
