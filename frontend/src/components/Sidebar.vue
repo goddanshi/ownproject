@@ -55,11 +55,11 @@
           </RouterLink>
         </div>
 
-        <!-- Разделитель для проектов -->
-        <hr class="menu-divider" />
+        <!-- Разделитель для проектов (не для менеджеров по продажам) -->
+        <hr v-if="!authStore.isSalesManager" class="menu-divider" />
 
-        <!-- Проекты - клик открывает боковой сайдбар -->
-        <div class="menu-section">
+        <!-- Проекты - клик открывает боковой сайдбар (не для менеджеров по продажам) -->
+        <div v-if="!authStore.isSalesManager" class="menu-section">
           <button
             class="nav-item nav-item-button"
             :class="{ active: projectsSidebarOpen }"
@@ -185,6 +185,10 @@ const projectsMenuItem = {
 // Фильтруем общие пункты меню по правам
 const visibleGeneralItems = computed(() => {
   return generalMenuItems.filter(item => {
+    // Менеджеры по продажам видят только лиды
+    if (authStore.isSalesManager) {
+      return item.path === '/leads'
+    }
     if (!item.permission) return true
     return authStore.can(item.permission)
   })
