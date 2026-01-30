@@ -52,10 +52,11 @@
         {{ message }}
       </div>
 
-      <div class="register-link">
+      <!-- TEMPORARILY DISABLED: Uncomment to enable registration link -->
+      <!-- <div class="register-link">
         Нет аккаунта?
         <RouterLink to="/register">Зарегистрироваться</RouterLink>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

@@ -20,11 +20,16 @@ const router = createRouter({
       component: () => import('../views/LoginView.vue'),
       meta: { guest: true }
     },
+    // TEMPORARILY DISABLED: Uncomment to enable registration
+    // {
+    //   path: '/register',
+    //   name: 'register',
+    //   component: () => import('../views/RegisterView.vue'),
+    //   meta: { guest: true }
+    // },
     {
       path: '/register',
-      name: 'register',
-      component: () => import('../views/RegisterView.vue'),
-      meta: { guest: true }
+      redirect: '/login'
     },
     {
       path: '/dashboard',
