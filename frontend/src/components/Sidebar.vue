@@ -128,12 +128,12 @@ const generalMenuItems = [
     icon: TasksIcon,
     permission: 'view_tasks'
   },
-  {
-    path: '/analytics',
-    label: 'Аналитика',
-    icon: AnalyticsIcon,
-    // permission: 'view_analytics'
-  },
+  // {
+  //   path: '/analytics',
+  //   label: 'Аналитика',
+  //   icon: AnalyticsIcon,
+  //   // permission: 'view_analytics'
+  // },
   {
     path: '/workers',
     label: 'Сотрудники',
@@ -163,11 +163,11 @@ const generalMenuItems = [
     label: 'Лиды',
     icon: RequestIcon
   },
-  {
-    path: '/aichat',
-    label: "AI Ассистент",
-    icon: AiIcon,
-  }
+  // {
+  //   path: '/aichat',
+  //   label: "AI Ассистент",
+  //   icon: AiIcon,
+  // }
 ]
 
 // Личные пункты меню (теперь пустой, все перенесено в общие)
