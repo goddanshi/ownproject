@@ -18,7 +18,7 @@ class FoldersController extends Controller
             'corsFilter' => [
                 'class' => Cors::class,
                 'cors' => [
-                    'Origin' => ['http://localhost:5173', 'http://185.213.240.236:5173', 'http://185.104.113.132', 'http://185.104.113.132:8080', 'http://185.213.240.236'],
+                    'Origin' => ['http://localhost:5173', 'http://185.213.240.236:5173', 'http://91.218.245.170', 'http://91.218.245.170:8080', 'http://185.213.240.236'],
                     'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
                     'Access-Control-Request-Headers' => ['*'],
                     'Access-Control-Allow-Credentials' => true,

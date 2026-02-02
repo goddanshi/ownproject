@@ -20,8 +20,8 @@ class UserController extends Controller
             'cors' => [
                 'Origin' => [
                     'http://185.213.240.236',
-                    'http://185.104.113.132',
-                    'http://185.104.113.132:8080',
+                    'http://91.218.245.170',
+                    'http://91.218.245.170:8080',
                     'http://localhost:5173',
                     'http://127.0.0.1:5173'
                 ],

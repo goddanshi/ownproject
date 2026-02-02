@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Всегда используем production сервер аналитики
-const ANALYTICS_API_URL = 'http://185.104.113.132:9999'
+const ANALYTICS_API_URL = 'http://91.218.245.170:9999'
 
 const analyticsApi = axios.create({
   baseURL: ANALYTICS_API_URL,
