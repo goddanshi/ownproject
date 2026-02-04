@@ -7,14 +7,13 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: false,
     loading: false,
     checked: false,
-    permissionsLoading: false
+    permissionsLoading: false,
+    permissionsCache: {} // Кэш прав по ролям
   }),
 
   persist: {
     storage: localStorage,
-    paths: ['isAuthenticated', 'checked'],
-    // Исключаем user из persist, чтобы permissions не сохранялись в localStorage
-    // Базовые данные пользователя будем получать из checkAuth
+    paths: ['isAuthenticated', 'checked', 'permissionsCache'],
   },
 
   getters: {
@@ -39,9 +38,13 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      // Если уже checked и есть user, всегда загружаем свежие права
+      // Если уже checked и есть user, используем кэш прав
       if (this.checked && this.user) {
-        await this.loadUserPermissions()
+        // Загружаем права из кэша (без запроса)
+        const cacheKey = `role_${this.user.role}`
+        if (this.permissionsCache[cacheKey]) {
+          this.user.permissions = this.permissionsCache[cacheKey]
+        }
         return
       }
 
@@ -93,12 +96,21 @@ export const useAuthStore = defineStore('auth', {
     async loadUserPermissions() {
       if (!this.user) return
 
+      // Проверяем кэш
+      const cacheKey = `role_${this.user.role}`
+      if (this.permissionsCache[cacheKey]) {
+        this.user.permissions = this.permissionsCache[cacheKey]
+        return
+      }
+
       try {
         const { default: settingsApi } = await import('@/services/settings')
         const result = await settingsApi.getRolePermissions(this.user.role)
 
         if (result.success) {
           this.user.permissions = result.permissions || []
+          // Кэшируем результат
+          this.permissionsCache[cacheKey] = this.user.permissions
         } else {
           this.user.permissions = []
         }
