@@ -9,6 +9,10 @@ use yii\web\Response;
 use common\components\JwtHelper;
 use common\models\User;
 use common\models\Lead;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class LeadsController extends Controller
 {
@@ -80,6 +84,22 @@ class LeadsController extends Controller
             $query->andWhere(['created_by' => $user->id]);
         }
 
+        // Фильтр по менеджеру
+        $managerId = Yii::$app->request->get('manager_id');
+        if ($managerId) {
+            $query->andWhere(['manager_id' => $managerId]);
+        }
+
+        // Фильтр по датам
+        $dateFrom = Yii::$app->request->get('date_from');
+        $dateTo = Yii::$app->request->get('date_to');
+        if ($dateFrom) {
+            $query->andWhere(['>=', 'date', $dateFrom]);
+        }
+        if ($dateTo) {
+            $query->andWhere(['<=', 'date', $dateTo]);
+        }
+
         $leads = $query->orderBy(['created_at' => SORT_DESC])->all();
 
         $result = [];
@@ -138,6 +158,7 @@ class LeadsController extends Controller
         $lead = new Lead();
         $lead->date = $data['date'] ?? time();
         $lead->website = $data['website'] ?? null;
+        $lead->channel = $data['channel'] ?? null;
         $lead->contact_type = $data['contact_type'];
         $lead->contact_value = $data['contact_value'];
         $lead->audit_info = $data['audit_info'] ?? null;
@@ -148,6 +169,7 @@ class LeadsController extends Controller
         $lead->status = $data['status'] ?? Lead::STATUS_NEW;
         $lead->contact_date = $data['contact_date'] ?? null;
         $lead->comment = $data['comment'] ?? null;
+        $lead->manager_id = $data['manager_id'] ?? null;
         $lead->created_by = $user->id;
 
         if ($lead->save()) {
@@ -191,6 +213,7 @@ class LeadsController extends Controller
 
         if (isset($data['date'])) $lead->date = $data['date'];
         if (isset($data['website'])) $lead->website = $data['website'];
+        if (isset($data['channel'])) $lead->channel = $data['channel'];
         if (isset($data['contact_type'])) $lead->contact_type = $data['contact_type'];
         if (isset($data['contact_value'])) $lead->contact_value = $data['contact_value'];
         if (isset($data['audit_info'])) $lead->audit_info = $data['audit_info'];
@@ -201,6 +224,7 @@ class LeadsController extends Controller
         if (isset($data['status'])) $lead->status = $data['status'];
         if (isset($data['contact_date'])) $lead->contact_date = $data['contact_date'];
         if (isset($data['comment'])) $lead->comment = $data['comment'];
+        if (isset($data['manager_id'])) $lead->manager_id = $data['manager_id'];
 
         if ($lead->save()) {
             return [
@@ -253,14 +277,165 @@ class LeadsController extends Controller
     }
 
     /**
+     * Получить список менеджеров (для выбора в форме)
+     */
+    public function actionGetManagers()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        // Получаем всех пользователей с ролью админ (1) и менеджер по продажам (4)
+        $managers = User::find()
+            ->where(['in', 'role', [User::ROLE_ADMIN, User::ROLE_SALES_MANAGER]])
+            ->all();
+
+        $result = [];
+        foreach ($managers as $manager) {
+            $result[] = [
+                'id' => $manager->id,
+                'username' => $manager->username,
+                'name' => $manager->name,
+                'surname' => $manager->surname,
+                'role' => $manager->role,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'managers' => $result
+        ];
+    }
+
+    /**
+     * Получить список уникальных каналов (для автодополнения)
+     */
+    public function actionGetChannels()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $channels = Lead::find()
+            ->select('channel')
+            ->distinct()
+            ->where(['not', ['channel' => null]])
+            ->andWhere(['<>', 'channel', ''])
+            ->orderBy('channel')
+            ->column();
+
+        return [
+            'success' => true,
+            'channels' => $channels
+        ];
+    }
+
+    /**
+     * Экспорт лидов в Excel
+     */
+    public function actionExport()
+    {
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $query = Lead::find();
+
+        // Менеджеры по продажам видят только свои лиды
+        if ($user->role == 4) {
+            $query->andWhere(['created_by' => $user->id]);
+        }
+
+        // Применяем фильтры
+        $managerId = Yii::$app->request->get('manager_id');
+        if ($managerId) {
+            $query->andWhere(['manager_id' => $managerId]);
+        }
+
+        $dateFrom = Yii::$app->request->get('date_from');
+        $dateTo = Yii::$app->request->get('date_to');
+        if ($dateFrom) {
+            $query->andWhere(['>=', 'date', $dateFrom]);
+        }
+        if ($dateTo) {
+            $query->andWhere(['<=', 'date', $dateTo]);
+        }
+
+        $leads = $query->orderBy(['date' => SORT_DESC])->all();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Заголовки
+        $headers = [
+            'ID', 'Дата заявки', 'Сайт', 'Канал', 'Тип связи', 'Контакт',
+            'Цена', 'Статус', 'Дата связи', 'Менеджер', 'Создал', 'Комментарий'
+        ];
+
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $sheet->getStyle($col . '1')->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('FF4A5568');
+            $sheet->getStyle($col . '1')->getFont()->getColor()->setARGB('FFFFFFFF');
+            $sheet->getStyle($col . '1')->getFont()->setBold(true);
+            $sheet->getStyle($col . '1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $col++;
+        }
+
+        // Данные
+        $row = 2;
+        foreach ($leads as $lead) {
+            $sheet->setCellValue('A' . $row, $lead->id);
+            $sheet->setCellValue('B' . $row, $lead->date ? date('Y-m-d', $lead->date) : '');
+            $sheet->setCellValue('C' . $row, $lead->website);
+            $sheet->setCellValue('D' . $row, $lead->channel);
+            $sheet->setCellValue('E' . $row, $lead->getContactTypeLabel());
+            $sheet->setCellValue('F' . $row, $lead->contact_value);
+            $sheet->setCellValue('G' . $row, $lead->price);
+            $sheet->setCellValue('H' . $row, $lead->getStatusLabel());
+            $sheet->setCellValue('I' . $row, $lead->contact_date ? date('Y-m-d', $lead->contact_date) : '');
+            $sheet->setCellValue('J' . $row, $lead->manager ? $lead->manager->name . ' ' . $lead->manager->surname : '');
+            $sheet->setCellValue('K' . $row, $lead->creator->name . ' ' . $lead->creator->surname);
+            $sheet->setCellValue('L' . $row, $lead->comment);
+            $row++;
+        }
+
+        // Автоширина колонок
+        foreach (range('A', 'L') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'leads_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
      * Форматировать данные лида для отправки на frontend
      */
     private function formatLead($lead)
     {
-        return [
+        $result = [
             'id' => $lead->id,
             'date' => $lead->date,
             'website' => $lead->website,
+            'channel' => $lead->channel,
             'contact_type' => $lead->contact_type,
             'contact_type_label' => $lead->getContactTypeLabel(),
             'contact_value' => $lead->contact_value,
@@ -283,8 +458,21 @@ class LeadsController extends Controller
                 'name' => $lead->creator->name,
                 'surname' => $lead->creator->surname,
             ],
+            'manager_id' => $lead->manager_id,
+            'manager' => null,
             'created_at' => $lead->created_at,
             'updated_at' => $lead->updated_at,
         ];
+
+        if ($lead->manager) {
+            $result['manager'] = [
+                'id' => $lead->manager->id,
+                'username' => $lead->manager->username,
+                'name' => $lead->manager->name,
+                'surname' => $lead->manager->surname,
+            ];
+        }
+
+        return $result;
     }
 }

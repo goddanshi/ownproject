@@ -8,13 +8,48 @@
       <div class="page-header">
         <div class="header-info">
           <h2>Управление лидами</h2>
-          <p class="subtitle">Всего лидов: {{ leads.length }}</p>
+          <p class="subtitle">Всего лидов: {{ filteredLeads.length }}</p>
         </div>
-        <button @click="openCreateModal" class="btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Добавить лид
+        <div class="header-actions">
+          <button @click="exportToExcel" class="btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Экспорт Excel
+          </button>
+          <button @click="openCreateModal" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Добавить лид
+          </button>
+        </div>
+      </div>
+
+      <!-- Фильтры -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Менеджер</label>
+          <select v-model="filters.managerId" @change="loadLeads" class="filter-control">
+            <option :value="null">Все менеджеры</option>
+            <option v-for="manager in managers" :key="manager.id" :value="manager.id">
+              {{ manager.name }} {{ manager.surname }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Дата от</label>
+          <input type="date" v-model="filters.dateFrom" @change="loadLeads" class="filter-control" />
+        </div>
+
+        <div class="filter-group">
+          <label>Дата до</label>
+          <input type="date" v-model="filters.dateTo" @change="loadLeads" class="filter-control" />
+        </div>
+
+        <button v-if="hasActiveFilters" @click="resetFilters" class="btn-reset">
+          Сбросить фильтры
         </button>
       </div>
 
@@ -31,14 +66,21 @@
       >
         <div class="column-header">
           <h3>{{ status.label }}</h3>
-          <span class="count">{{ getLeadsByStatus(status.id).length }}</span>
+          <span class="count">{{ getFilteredLeadsByStatus(status.id).length }}</span>
         </div>
 
-        <div class="column-content">
+        <div
+          class="column-content"
+          @dragover.prevent
+          @drop="handleDrop($event, status.id)"
+        >
           <div
-            v-for="lead in getLeadsByStatus(status.id)"
+            v-for="lead in getFilteredLeadsByStatus(status.id)"
             :key="lead.id"
             class="lead-card"
+            draggable="true"
+            @dragstart="handleDragStart($event, lead)"
+            @dragend="handleDragEnd"
             @click="openDetailsModal(lead)"
           >
             <div class="lead-header">
@@ -113,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import leadsApi from '../services/leads'
 import LeadModal from './Leads/LeadModal.vue'
@@ -125,6 +167,14 @@ const showModal = ref(false)
 const showDetailsModal = ref(false)
 const selectedLead = ref(null)
 const selectedLeadId = ref(null)
+const managers = ref([])
+const draggedLead = ref(null)
+
+const filters = ref({
+  managerId: null,
+  dateFrom: '',
+  dateTo: ''
+})
 
 const statuses = [
   { id: 5, label: 'Холодные' },
@@ -134,10 +184,33 @@ const statuses = [
   { id: 4, label: 'Слился' }
 ]
 
+const hasActiveFilters = computed(() => {
+  return filters.value.managerId || filters.value.dateFrom || filters.value.dateTo
+})
+
+const filteredLeads = computed(() => leads.value)
+
+const dateInputToTimestamp = (dateInput) => {
+  if (!dateInput) return null
+  return Math.floor(new Date(dateInput).getTime() / 1000)
+}
+
 const loadLeads = async () => {
   try {
     loading.value = true
-    const response = await leadsApi.getLeads()
+
+    const filterParams = {}
+    if (filters.value.managerId) {
+      filterParams.managerId = filters.value.managerId
+    }
+    if (filters.value.dateFrom) {
+      filterParams.dateFrom = dateInputToTimestamp(filters.value.dateFrom)
+    }
+    if (filters.value.dateTo) {
+      filterParams.dateTo = dateInputToTimestamp(filters.value.dateTo)
+    }
+
+    const response = await leadsApi.getLeads(filterParams)
     if (response.success) {
       leads.value = response.leads
     }
@@ -148,8 +221,43 @@ const loadLeads = async () => {
   }
 }
 
-const getLeadsByStatus = (statusId) => {
-  return leads.value.filter(lead => lead.status === statusId)
+const loadManagers = async () => {
+  try {
+    const response = await leadsApi.getManagers()
+    if (response.success) {
+      managers.value = response.managers
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки менеджеров:', error)
+  }
+}
+
+const getFilteredLeadsByStatus = (statusId) => {
+  return filteredLeads.value.filter(lead => lead.status === statusId)
+}
+
+const resetFilters = () => {
+  filters.value = {
+    managerId: null,
+    dateFrom: '',
+    dateTo: ''
+  }
+  loadLeads()
+}
+
+const exportToExcel = () => {
+  const filterParams = {}
+  if (filters.value.managerId) {
+    filterParams.managerId = filters.value.managerId
+  }
+  if (filters.value.dateFrom) {
+    filterParams.dateFrom = dateInputToTimestamp(filters.value.dateFrom)
+  }
+  if (filters.value.dateTo) {
+    filterParams.dateTo = dateInputToTimestamp(filters.value.dateTo)
+  }
+
+  leadsApi.exportToExcel(filterParams)
 }
 
 const openCreateModal = () => {
@@ -212,8 +320,66 @@ const getContactDateClass = (lead) => {
   return 'future'
 }
 
+const handleDragStart = (event, lead) => {
+  draggedLead.value = lead
+  event.target.style.opacity = '0.5'
+}
+
+const handleDragEnd = (event) => {
+  event.target.style.opacity = '1'
+}
+
+const handleDrop = async (event, newStatus) => {
+  event.preventDefault()
+
+  if (!draggedLead.value || draggedLead.value.status === newStatus) {
+    draggedLead.value = null
+    return
+  }
+
+  const leadToUpdate = draggedLead.value
+  const oldStatus = leadToUpdate.status
+
+  try {
+    // Оптимистично обновляем UI
+    leadToUpdate.status = newStatus
+
+    // Отправляем на сервер
+    const response = await leadsApi.updateLead(leadToUpdate.id, {
+      date: leadToUpdate.date,
+      website: leadToUpdate.website,
+      channel: leadToUpdate.channel,
+      contactType: leadToUpdate.contact_type,
+      contactValue: leadToUpdate.contact_value,
+      auditInfo: leadToUpdate.audit_info,
+      auditStatus: leadToUpdate.audit_status,
+      proposalInfo: leadToUpdate.proposal_info,
+      proposalStatus: leadToUpdate.proposal_status,
+      price: leadToUpdate.price,
+      status: newStatus,
+      contactDate: leadToUpdate.contact_date,
+      comment: leadToUpdate.comment,
+      managerId: leadToUpdate.manager_id
+    })
+
+    if (!response.success) {
+      // Откатываем если не удалось
+      leadToUpdate.status = oldStatus
+      alert('Ошибка обновления статуса: ' + response.message)
+    }
+  } catch (error) {
+    // Откатываем при ошибке
+    leadToUpdate.status = oldStatus
+    console.error('Ошибка обновления статуса:', error)
+    alert('Произошла ошибка при обновлении статуса')
+  }
+
+  draggedLead.value = null
+}
+
 onMounted(() => {
   loadLeads()
+  loadManagers()
 })
 </script>
 
@@ -230,8 +396,13 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .header-info h2 {
@@ -267,6 +438,85 @@ onMounted(() => {
 
 .btn-primary:hover {
   background: #1a202c;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #2d3748;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary svg {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #2d3748;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.filter-control {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.filter-control:focus {
+  outline: none;
+  border-color: #2d3748;
+}
+
+.btn-reset {
+  padding: 0.625rem 1.25rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-reset:hover {
+  background: #dc2626;
 }
 
 .loading {
@@ -337,26 +587,32 @@ onMounted(() => {
   font-weight: 600;
 }
 
+
+.lead-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: grab;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+}
+
+.lead-card:active {
+  cursor: grabbing;
+}
+
+.lead-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
 .column-content {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.lead-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid #e5e7eb;
-}
-
-.lead-card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  min-height: 200px;
 }
 
 .lead-header {

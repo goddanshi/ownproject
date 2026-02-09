@@ -31,6 +31,32 @@
               />
             </div>
 
+            <!-- Канал/Источник -->
+            <div class="form-group">
+              <label>Канал/Источник</label>
+              <input
+                type="text"
+                v-model="formData.channel"
+                list="channels-list"
+                placeholder="Выберите или введите канал"
+                class="form-control"
+              />
+              <datalist id="channels-list">
+                <option v-for="channel in channels" :key="channel" :value="channel"></option>
+              </datalist>
+            </div>
+
+            <!-- Менеджер -->
+            <div class="form-group">
+              <label>Ответственный менеджер</label>
+              <select v-model.number="formData.managerId" class="form-control">
+                <option :value="null">Не выбран</option>
+                <option v-for="manager in managers" :key="manager.id" :value="manager.id">
+                  {{ manager.name }} {{ manager.surname }}
+                </option>
+              </select>
+            </div>
+
             <!-- Тип контакта -->
             <div class="form-group">
               <label>Тип связи *</label>
@@ -172,10 +198,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 
 const saving = ref(false)
+const managers = ref([])
+const channels = ref([])
 
 const formData = ref({
   dateInput: '',
   website: '',
+  channel: '',
   contactType: '',
   contactValue: '',
   auditInfo: '',
@@ -185,7 +214,8 @@ const formData = ref({
   price: null,
   status: 1,
   contactDateInput: '',
-  comment: ''
+  comment: '',
+  managerId: null
 })
 
 const timestampToDateInput = (timestamp) => {
@@ -206,6 +236,7 @@ const handleSubmit = async () => {
     const leadData = {
       date: dateInputToTimestamp(formData.value.dateInput),
       website: formData.value.website || null,
+      channel: formData.value.channel || null,
       contactType: formData.value.contactType,
       contactValue: formData.value.contactValue,
       auditInfo: formData.value.auditInfo || null,
@@ -215,7 +246,8 @@ const handleSubmit = async () => {
       price: formData.value.price || null,
       status: formData.value.status,
       contactDate: dateInputToTimestamp(formData.value.contactDateInput),
-      comment: formData.value.comment || null
+      comment: formData.value.comment || null,
+      managerId: formData.value.managerId || null
     }
 
     let response
@@ -238,11 +270,30 @@ const handleSubmit = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Загрузить менеджеров и каналы
+  try {
+    const [managersResp, channelsResp] = await Promise.all([
+      leadsApi.getManagers(),
+      leadsApi.getChannels()
+    ])
+
+    if (managersResp.success) {
+      managers.value = managersResp.managers
+    }
+
+    if (channelsResp.success) {
+      channels.value = channelsResp.channels
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error)
+  }
+
   if (props.lead) {
     formData.value = {
       dateInput: timestampToDateInput(props.lead.date),
       website: props.lead.website || '',
+      channel: props.lead.channel || '',
       contactType: props.lead.contact_type,
       contactValue: props.lead.contact_value,
       auditInfo: props.lead.audit_info || '',
@@ -252,7 +303,8 @@ onMounted(() => {
       price: props.lead.price,
       status: props.lead.status,
       contactDateInput: timestampToDateInput(props.lead.contact_date),
-      comment: props.lead.comment || ''
+      comment: props.lead.comment || '',
+      managerId: props.lead.manager_id
     }
   } else {
     // Для нового лида устанавливаем текущую дату

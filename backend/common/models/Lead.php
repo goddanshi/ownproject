@@ -38,10 +38,10 @@ class Lead extends ActiveRecord
     {
         return [
             [['date', 'contact_type', 'contact_value', 'created_by'], 'required'],
-            [['date', 'contact_date', 'status', 'created_by'], 'integer'],
+            [['date', 'contact_date', 'status', 'created_by', 'manager_id'], 'integer'],
             [['price'], 'number'],
             [['audit_info', 'proposal_info', 'comment'], 'string'],
-            [['website', 'contact_value'], 'string', 'max' => 255],
+            [['website', 'contact_value', 'channel'], 'string', 'max' => 255],
             [['contact_type'], 'string', 'max' => 50],
             [['audit_status', 'proposal_status'], 'string', 'max' => 20],
             ['status', 'default', 'value' => self::STATUS_NEW],
@@ -52,6 +52,7 @@ class Lead extends ActiveRecord
             ['proposal_status', 'default', 'value' => self::NOT_READY],
             ['proposal_status', 'in', 'range' => [self::READY, self::NOT_READY]],
             ['created_by', 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
+            ['manager_id', 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
         ];
     }
 
@@ -61,6 +62,7 @@ class Lead extends ActiveRecord
             'id' => 'ID',
             'date' => 'Дата заявки',
             'website' => 'Сайт',
+            'channel' => 'Канал/Источник',
             'contact_type' => 'Тип связи',
             'contact_value' => 'Контакт',
             'audit_info' => 'Информация по аудиту',
@@ -72,6 +74,7 @@ class Lead extends ActiveRecord
             'contact_date' => 'Дата связи',
             'comment' => 'Комментарий',
             'created_by' => 'Создал',
+            'manager_id' => 'Менеджер',
             'created_at' => 'Дата создания',
             'updated_at' => 'Обновлено',
         ];
@@ -80,6 +83,11 @@ class Lead extends ActiveRecord
     public function getCreator()
     {
         return $this->hasOne(User::class, ['id' => 'created_by']);
+    }
+
+    public function getManager()
+    {
+        return $this->hasOne(User::class, ['id' => 'manager_id']);
     }
 
     public function getStatusLabel()
