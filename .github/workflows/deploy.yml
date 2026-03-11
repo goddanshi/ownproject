@@ -40,7 +40,7 @@ jobs:
       - name: Deploy Backend
         uses: burnett01/rsync-deployments@6.0.0
         with:
-          switches: -avzr --delete --exclude 'vendor/' --exclude 'runtime/' --exclude '*-local.php' --exclude 'backend/web/index.php' --exclude 'backend/web/index-test.php' --exclude 'frontend/web/index.php' --exclude 'frontend/web/index-test.php' --exclude 'yii' --exclude 'yii_test' --exclude 'yii_test.bat'
+          switches: -avzr --delete --exclude 'vendor/' --exclude 'runtime/' --exclude '*-local.php' --exclude 'backend/web/index.php' --exclude 'backend/web/index-test.php' --exclude 'backend/web/assets/' --exclude 'frontend/web/index.php' --exclude 'frontend/web/index-test.php' --exclude 'frontend/web/assets/' --exclude 'yii' --exclude 'yii_test' --exclude 'yii_test.bat'
           path: backend/
           remote_path: /var/www/backend/
           remote_host: ${{ secrets.VPS_HOST }}
