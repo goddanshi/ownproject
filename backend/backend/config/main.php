@@ -39,6 +39,7 @@ return [
             'showScriptName' => false,
             'rules' => [
                 // --------------------------------
+                'OPTIONS api/<action>' => 'api/options',
                 'POST api/register' => 'api/register',
                 'POST api/login' => 'api/login',
                 'GET api/check' => 'api/check',

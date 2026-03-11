@@ -7,7 +7,7 @@ use yii\db\Migration;
 /**
  * Adds deadline column to task_todos table
  */
-class m250112_000000_add_deadline_to_task_todos extends Migration
+class m250124_000001_add_deadline_to_task_todos extends Migration
 {
     public function safeUp()
     {

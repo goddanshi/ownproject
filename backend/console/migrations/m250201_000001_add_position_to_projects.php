@@ -7,7 +7,7 @@ use yii\db\Migration;
 /**
  * Adds position column to projects table for drag-and-drop ordering
  */
-class m250112_000001_add_position_to_projects extends Migration
+class m250201_000001_add_position_to_projects extends Migration
 {
     public function safeUp()
     {

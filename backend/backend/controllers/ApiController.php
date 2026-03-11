@@ -35,6 +35,12 @@ class ApiController extends Controller
         return $behaviors;
     }
 
+    public function actionOptions()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return ['success' => true];
+    }
+
     // POST /api/register
     public function actionRegister()
     {

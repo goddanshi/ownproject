@@ -70,15 +70,15 @@ class StatisticsController extends Controller
         // Фильтрация по пользователю (через назначения)
         if ($userId) {
             $query->joinWith('taskAssignments')
-                ->andWhere(['task_assignment.user_id' => $userId]);
+                ->andWhere(['task_assignments.user_id' => $userId]);
         }
 
         // Фильтрация по датам (по дате создания задачи)
         if ($dateFrom) {
-            $query->andWhere(['>=', 'created_at', strtotime($dateFrom)]);
+            $query->andWhere(['>=', 'tasks.created_at', strtotime($dateFrom)]);
         }
         if ($dateTo) {
-            $query->andWhere(['<=', 'created_at', strtotime($dateTo . ' 23:59:59')]);
+            $query->andWhere(['<=', 'tasks.created_at', strtotime($dateTo . ' 23:59:59')]);
         }
 
         $tasks = $query->all();
@@ -220,7 +220,7 @@ class StatisticsController extends Controller
         foreach ($users as $user) {
             $trackingQuery = TimeTracking::find()
                 ->joinWith('task.project')
-                ->where(['time_tracking.user_id' => $user->id]);
+                ->where(['time_trackings.user_id' => $user->id]);
 
             // Фильтрация по проекту
             if ($projectId) {
@@ -229,10 +229,10 @@ class StatisticsController extends Controller
 
             // Фильтрация по датам
             if ($dateFrom) {
-                $trackingQuery->andWhere(['>=', 'time_tracking.started_at', strtotime($dateFrom)]);
+                $trackingQuery->andWhere(['>=', 'time_trackings.started_at', strtotime($dateFrom)]);
             }
             if ($dateTo) {
-                $trackingQuery->andWhere(['<=', 'time_tracking.started_at', strtotime($dateTo . ' 23:59:59')]);
+                $trackingQuery->andWhere(['<=', 'time_trackings.started_at', strtotime($dateTo . ' 23:59:59')]);
             }
 
             $trackings = $trackingQuery->all();
@@ -319,15 +319,15 @@ class StatisticsController extends Controller
         // Фильтрация по пользователю
         if ($userId) {
             $query->joinWith('taskAssignments')
-                ->andWhere(['task_assignment.user_id' => $userId]);
+                ->andWhere(['task_assignments.user_id' => $userId]);
         }
 
         // Фильтрация по датам
         if ($dateFrom) {
-            $query->andWhere(['>=', 'created_at', strtotime($dateFrom)]);
+            $query->andWhere(['>=', 'tasks.created_at', strtotime($dateFrom)]);
         }
         if ($dateTo) {
-            $query->andWhere(['<=', 'created_at', strtotime($dateTo . ' 23:59:59')]);
+            $query->andWhere(['<=', 'tasks.created_at', strtotime($dateTo . ' 23:59:59')]);
         }
 
         $tasks = $query->all();
@@ -441,16 +441,7 @@ class StatisticsController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Отправка файла
-        $filename = 'statistics_tasks_' . date('Y-m-d_H-i-s') . '.xlsx';
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        return $this->sendSpreadsheet($spreadsheet, 'statistics_tasks');
     }
 
     /**
@@ -500,16 +491,7 @@ class StatisticsController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Отправка файла
-        $filename = 'statistics_projects_' . date('Y-m-d_H-i-s') . '.xlsx';
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        return $this->sendSpreadsheet($spreadsheet, 'statistics_projects');
     }
 
     /**
@@ -579,16 +561,7 @@ class StatisticsController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Отправка файла
-        $filename = 'statistics_employees_' . date('Y-m-d_H-i-s') . '.xlsx';
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        return $this->sendSpreadsheet($spreadsheet, 'statistics_employees');
     }
 
     /**
@@ -647,15 +620,24 @@ class StatisticsController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Отправка файла
-        $filename = 'statistics_overruns_' . date('Y-m-d_H-i-s') . '.xlsx';
+        return $this->sendSpreadsheet($spreadsheet, 'statistics_overruns');
+    }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
+    private function sendSpreadsheet($spreadsheet, $prefix)
+    {
+        $filename = $prefix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx');
         $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        $writer->save($tempFile);
+
+        $content = file_get_contents($tempFile);
+        unlink($tempFile);
+
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        Yii::$app->response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        Yii::$app->response->headers->set('Content-Disposition', 'attachment;filename="' . $filename . '"');
+        Yii::$app->response->headers->set('Cache-Control', 'max-age=0');
+
+        return $content;
     }
 }

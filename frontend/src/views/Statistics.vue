@@ -312,6 +312,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import api from '../services/api'
 import statisticsApi from '../services/statistics'
 import projectsApi from '../services/projects'
 import usersApi from '../services/users'
@@ -480,11 +481,7 @@ const loadOverrunsStatistics = async () => {
 }
 
 // Экспорт в Excel
-const exportToExcel = (type) => {
-  const API_URL = import.meta.env.DEV
-    ? 'http://localhost:8000'
-    : 'http://91.218.245.170:8000'
-
+const exportToExcel = async (type) => {
   const endpoints = {
     tasks: '/api/statistics/export-tasks',
     projects: '/api/statistics/export-projects',
@@ -521,11 +518,23 @@ const exportToExcel = (type) => {
     if (overrunsFilters.value.date_to) params.append('date_to', overrunsFilters.value.date_to)
   }
 
-  const queryString = params.toString()
-  const url = `${API_URL}${endpoint}${queryString ? '?' + queryString : ''}`
+  try {
+    const queryString = params.toString()
+    const response = await api.get(`${endpoint}${queryString ? '?' + queryString : ''}`, {
+      responseType: 'blob'
+    })
 
-  // Открываем URL для скачивания файла
-  window.location.href = url
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `statistics_${type}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Ошибка экспорта:', error)
+  }
 }
 
 onMounted(async () => {

@@ -3,7 +3,7 @@ namespace console\migrations;
 
 use yii\db\Migration;
 
-class m250131_000000_create_projects_and_tasks_tables extends Migration
+class m241021_000001_create_projects_and_tasks_tables extends Migration
 {
     public function safeUp()
     {
